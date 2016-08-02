@@ -1,7 +1,7 @@
 ##############################################################
 #
-# Xilinx Core Generator version 14.3
-# Date: Fri Jul 15 06:08:07 2016
+# Xilinx Core Generator version 14.7
+# Date: Tue Aug 02 12:11:16 2016
 #
 ##############################################################
 #
@@ -51,7 +51,7 @@ CSET axis_type=FIFO
 CSET buser_width=1
 CSET clock_enable_type=Slave_Interface_Clock_Enable
 CSET clock_type_axi=Common_Clock
-CSET component_name=fifo_generator_v9_3_tc
+CSET component_name=Fifo_Buffer_Tc
 CSET data_count=false
 CSET data_count_width=10
 CSET disable_timing_violations=false
@@ -194,7 +194,7 @@ CSET use_clock_enable=false
 CSET use_dout_reset=true
 CSET use_embedded_registers=false
 CSET use_extra_logic=false
-CSET valid_flag=true
+CSET valid_flag=false
 CSET valid_sense=Active_High
 CSET wach_type=FIFO
 CSET wdch_type=FIFO
@@ -207,7 +207,7 @@ CSET write_data_count_width=10
 CSET wuser_width=1
 # END Parameters
 # BEGIN Extra information
-MISC pkg_timestamp=2012-07-25T18:11:59Z
+MISC pkg_timestamp=2012-11-19T12:39:56Z
 # END Extra information
 GENERATE
-# CRC: 1ac5650b
+# CRC: 7e026880

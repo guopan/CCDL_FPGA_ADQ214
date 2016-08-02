@@ -44,19 +44,19 @@ module FIFO_in
 //Inter reg or wire
 wire rd_clk;
 wire wr_clk;
-wire [9:0] rd_data_count;
+// wire [9:0] rd_data_count;
 
 wire full,empty;
-wire overflow,underflow;
-wire wr_ack;
+// wire overflow,underflow;
+// wire wr_ack;
 
 reg wr_en;
 reg rd_en;
 reg [12:0] wr_counter;		//采样点计数器,FIFO写入点数控制
-reg [12:0] debug_counter;
+// reg [12:0] debug_counter;
 reg [12:0] BinPoint_counter;	//距离门内采样点计数器，FIFO读出补零控制
 reg [2:0] state,next_state;
-reg dataout_ctrl;
+// reg dataout_ctrl;
 wire [31:0] din;
 wire [15:0] dout;
 wire fifo_valid;
@@ -262,7 +262,9 @@ begin
 end
 
 //FIFO IN IP
-fifo_generator_v9_3 fifo_in (
+//输入位宽32bit，输出位宽16bit，写入深度4096。读写时钟同步。
+//深度2048就够了
+fifo_Buffer_in Fifo_Buffer_in_m (
                         .rst(rst), // input rst
                         .wr_clk(wr_clk), // input wr_clk
                         .rd_clk(rd_clk), // input rd_clk
@@ -271,14 +273,14 @@ fifo_generator_v9_3 fifo_in (
                         .rd_en(rd_en), // input rd_en
                         .dout(dout), // output [15 : 0] dout
                         .full(full), // output full
-                        .almost_full(almost_full), // output almost_full
-                        .wr_ack(wr_ack), // output wr_ack
-                        .overflow(overflow), // output overflow
+                        // .almost_full(almost_full), // output almost_full
+                        // .wr_ack(wr_ack), // output wr_ack
+                        // .overflow(overflow), // output overflow
                         .empty(empty), // output empty
-                        .almost_empty(almost_empty), // output almost_empty
-                        .valid(fifo_valid), // output valid
-                        .underflow(underflow), // output underflow
-                        .rd_data_count(rd_data_count) // output [9 : 0] rd_data_count
+                        // .almost_empty(almost_empty), // output almost_empty
+                        .valid(fifo_valid) // output valid
+                        // .underflow(underflow), // output underflow
+                        // .rd_data_count(rd_data_count) // output [9 : 0] rd_data_count
                     );
 
 endmodule

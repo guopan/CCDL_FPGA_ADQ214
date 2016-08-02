@@ -73,7 +73,7 @@ begin
 end
 
 //FIFO IP 写入深度1024，输入位宽32bit，输出位宽32bit，读写时钟同步
-fifo_generator_v9_3_tc fifo_tc_ip (
+Fifo_Buffer_Tc Fifo_Buffer_Tc_m (
                            .clk(clk), // input clk
                            .rst(rst), // input rst
                            .din(data_in), // input [31 : 0] din
@@ -81,8 +81,8 @@ fifo_generator_v9_3_tc fifo_tc_ip (
                            .rd_en(rd_en), // input rd_en
                            .dout(fifo_tc_dataout), // output [31 : 0] dout
                            .full(full), // output full
-                           .empty(empty), // output empty
-                           .valid(valid) // output valid
+                           .empty(empty) // output empty
+                           // .valid(valid) // output valid
                        );
 
 endmodule

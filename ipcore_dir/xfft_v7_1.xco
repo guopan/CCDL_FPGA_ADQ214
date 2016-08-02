@@ -1,7 +1,7 @@
 ##############################################################
 #
 # Xilinx Core Generator version 14.7
-# Date: Mon Aug 01 12:21:10 2016
+# Date: Tue Aug 02 11:54:40 2016
 #
 ##############################################################
 #
@@ -31,7 +31,7 @@ SET implementationfiletype = Ngc
 SET package = ff665
 SET removerpms = false
 SET simulationfiles = Behavioral
-SET speedgrade = -2
+SET speedgrade = -1
 SET verilogsim = true
 SET vhdlsim = false
 # END Project Options
@@ -69,4 +69,4 @@ CSET transform_length=1024
 MISC pkg_timestamp=2012-08-28T14:48:07Z
 # END Extra information
 GENERATE
-# CRC: 64dc2cdf
+# CRC: e59e44be
