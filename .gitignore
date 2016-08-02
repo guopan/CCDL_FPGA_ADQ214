@@ -73,6 +73,7 @@ work/
 ipcore_dir/*/
 ipcore_dir/*
 !ipcore_dir/*.xco
+ngc/
 
 # istyle formatter backup files
 *.orig

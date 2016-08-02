@@ -38,7 +38,6 @@ module Power_Spect_Cal(
        );
 
 //Inter wire or reg
-wire clk;
 wire fft_rst;
 wire [15:0] fft_data_re;
 wire [15:0] fft_data_im;

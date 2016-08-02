@@ -30,7 +30,8 @@ module user_logic_signal_processing
            output wire signed [NofBits-1:0]           y1_o,
            output wire signed [NofBits-1:0]           y1z_o,
            output wire [3:0]                          trigger_vector_o,
-
+		   output wire 								   data_valid_o,
+		   
            //User registers
            input wire [16*8-1:0]                      user_register_i,
            output wire [16*NofUserRegistersOut-1:0]   user_register_o,
@@ -62,7 +63,7 @@ wire [9:0]  xn_index;
 wire [9:0]  xk_index;
 // wire [9:0]  scl_ch;
 // wire scl_ch_we;
-wire rfd,busy,edone,done,dv;
+wire rfd,busy,edone,done;
 
 // -----------------------------------------------------------------------------------------------
 // This section sets the user logic part number, which can be set in the user logic build script
@@ -118,7 +119,7 @@ FIFO_in FIFO_in_m (
             .data_valid(fifo_in_valid)
         );
 
-//FFT_1024 模块。
+//功率谱计算模块，计算1024点FFT，及其功率谱。
 Power_Spect_Cal Power_Spect_Cal_m (
                     .clk(clk_i),
                     .rst(rst_i),
@@ -132,7 +133,7 @@ Power_Spect_Cal Power_Spect_Cal_m (
                     .busy(busy),
                     .edone(edone),
                     .done(done),
-                    .dv(dv)
+                    .dv(data_valid_o)
                 );
 
 endmodule

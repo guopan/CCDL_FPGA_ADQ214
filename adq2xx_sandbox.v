@@ -82,6 +82,7 @@ wire signed [NofBits-1:0]         data_a_userlogicsp;
 wire signed [NofBits-1:0]         data_az_userlogicsp;
 wire signed [NofBits-1:0]         data_b_userlogicsp;
 wire signed [NofBits-1:0]         data_bz_userlogicsp;
+wire							  data_valid_sp;
 
 wire signed [NofBits-1:0]         data_a_skip;
 wire signed [NofBits-1:0]         data_az_skip;
@@ -303,6 +304,7 @@ user_logic_signal_processing
         .y0z_o(data_az_userlogicsp),
         .y1_o(data_b_userlogicsp),
         .y1z_o(data_bz_userlogicsp),
+		.data_valid_o(data_valid_sp),
         .user_register_i(user_register_from_host),
         .user_register_o(user_register_to_host_sp),
         .ul_partnum_1_o(ul_partnum_1),
@@ -347,7 +349,8 @@ user_logic_data_packaging
         .x0z_i(data_az_skip),
         .x1_i(data_b_skip),
         .x1z_i(data_bz_skip),
-        .data_valid_i(data_valid_skip),
+//        .data_valid_i(data_valid_skip),
+        .data_valid_i(data_valid_sp),
         .trigger_vector_i(trigger_vector_skip),
         .trigger_vector_o(trigger_vector_from_userlogic_dp),
         .y0_o(data_a_userlogicdp),

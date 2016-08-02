@@ -63,6 +63,13 @@ wire fifo_valid;
 reg  wr_counter_en;	//读写计数器的使能信号，由输入start置高，有wr_en的下降沿置低
 reg  wr_en_d;
 
+//补零控制（FIFO读出）状态机，状态定义
+parameter  IDLE = 3'b000,
+           READOUT_FIFO = 3'b001,
+           READOUT_ZERO = 3'b010,
+           READ_FINISH1 = 3'b011,
+           READ_FINISH2 = 3'b100;
+
 //赋值
 assign din = wr_counter_en?data_in:32'b0;
 assign data_out = fifo_valid?dout:16'b0;
@@ -159,13 +166,6 @@ begin
     else
         BinPoint_counter <= BinPoint_counter + 1;
 end
-
-//补零控制（FIFO读出）状态循环
-parameter  IDLE = 3'b000,
-           READOUT_FIFO = 3'b001,
-           READOUT_ZERO = 3'b010,
-           READ_FINISH1 = 3'b011,
-           READ_FINISH2 = 3'b100;
 
 always @(posedge clk or posedge rst)
 begin
