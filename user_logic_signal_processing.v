@@ -30,8 +30,8 @@ module user_logic_signal_processing
            output wire signed [NofBits-1:0]           y1_o,
            output wire signed [NofBits-1:0]           y1z_o,
            output wire [3:0]                          trigger_vector_o,
-		   output wire 								   data_valid_o,
-		   
+           output wire 							   data_valid_o,
+
            //User registers
            input wire [16*8-1:0]                      user_register_i,
            output wire [16*NofUserRegistersOut-1:0]   user_register_o,
@@ -44,14 +44,14 @@ module user_logic_signal_processing
        );
 
 //Inter wire or reg
-///TR
+//TR
 wire trigger_valid;
 wire trigger_ready;
 wire trigger_start;
-///TC
+//TC
 wire fifo_tc_valid;
 wire [31:0] fifo_tc_dataout;
-///IN
+//IN
 wire [31:0] fifo_in_data;
 wire [15:0] data_out;
 wire fifo_in_valid;
@@ -59,11 +59,10 @@ wire fifo_in_valid;
 wire [15:0] fft_in_data;
 wire [15:0] fft_data_out_re;
 wire [15:0] fft_data_out_im;
-wire [9:0]  xn_index;
-wire [9:0]  xk_index;
-// wire [9:0]  scl_ch;
-// wire scl_ch_we;
-wire rfd,busy,edone,done;
+wire [9:0]  data_index;
+
+//功率谱计算
+wire [31:0] Power_Spec;
 
 // -----------------------------------------------------------------------------------------------
 // This section sets the user logic part number, which can be set in the user logic build script
@@ -120,21 +119,16 @@ FIFO_in FIFO_in_m (
         );
 
 //功率谱计算模块，计算1024点FFT，及其功率谱。
-Power_Spect_Cal Power_Spect_Cal_m (
-                    .clk(clk_i),
-                    .rst(rst_i),
-                    .fft_start(fifo_in_valid),
-                    .fifo_data(fft_in_data),
-                    .fft_data_out_re(fft_data_out_re),
-                    .fft_data_out_im(fft_data_out_im),
-                    .xn_index(xn_index),
-                    .xk_index(xk_index),
-                    .rfd(rfd),
-                    .busy(busy),
-                    .edone(edone),
-                    .done(done),
-                    .dv(data_valid_o)
-                );
+Power_Spec_Cal Power_Spec_Cal_m (
+                   .clk(clk_i),
+                   .rst(rst_i),
+                   .fft_start(fifo_in_valid),
+                   .fifo_data(fft_in_data),
+                   .Power_Spec(Power_Spec),
+                   .xn_index(xn_index),
+                   .data_index(data_index),
+                   .data_valid(data_valid_o)
+               );
 
 endmodule
 

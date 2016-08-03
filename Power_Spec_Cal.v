@@ -18,7 +18,7 @@
 // Additional Comments:
 //
 //////////////////////////////////////////////////////////////////////////////////
-module Power_Spect_Cal(
+module Power_Spec_Cal(
 
            // Clock input
            input wire clk,
@@ -29,23 +29,29 @@ module Power_Spect_Cal(
            input wire [15:0] fifo_data,
 
            //Signal output
-           output wire [15:0] fft_data_out_re,
-           output wire [15:0] fft_data_out_im,
+           output reg [31:0] Power_Spec,
            output wire [9:0] xn_index,
-           output wire [9:0] xk_index,
-           output wire rfd,busy,edone,done,dv
+           output reg [9:0] data_index,
+           output reg data_valid
 
        );
 
 //Inter wire or reg
+//FFT
 wire fft_rst;
-wire [15:0] fft_data_re;
-wire [15:0] fft_data_im;
 wire [9:0] scl_ch;
 wire scl_ch_we;
-
+wire rfd,busy,edone,done,dv;
+wire [9:0] xk_index;
+wire [15:0] fft_data_out_re;
+wire [15:0] fft_data_out_im;
+//Square
+wire [31:0] re_square;
+wire [31:0] im_square;
+//Other
+reg dv_reg1, dv_reg2, dv_reg3;
+reg [9:0] xk_index_reg1, xk_index_reg2, xk_index_reg3;
 // 赋值
-assign fft_data_re = fifo_data;
 assign fft_rst = rst;
 assign scl_ch = 10'b01_1010_1011;
 assign scl_ch_we = 1'b1;
@@ -56,7 +62,7 @@ assign scl_ch_we = 1'b1;
 xfft_v7_1 fft_1024_ip (
               .clk(clk), // input clk
               .start(fft_start), // input start
-              .xn_re(fft_data_re), // input [15 : 0] xn_re
+              .xn_re(fifo_data), // input [15 : 0] xn_re
               .xn_im(16'b0), // input [15 : 0] xn_im
               .fwd_inv(1'b1), // input fwd_inv
               .fwd_inv_we(1'b1), // input fwd_inv_we
@@ -72,5 +78,69 @@ xfft_v7_1 fft_1024_ip (
               .xk_re(fft_data_out_re), // output [15 : 0] xk_re
               .xk_im(fft_data_out_im) // output [15 : 0] xk_im
           );
+
+//实部的平方，3级流水
+Multiplier_16 Multiplier_RE (
+                  .clk(clk), // input clk
+                  .a(fft_data_out_re), // input [15 : 0] a
+                  .b(fft_data_out_re), // input [15 : 0] b
+                  .p(re_square) // output [31 : 0] p
+              );
+
+//虚部的平方，3级流水
+Multiplier_16 Multiplier_IM (
+                  .clk(clk), // input clk
+                  .a(fft_data_out_im), // input [15 : 0] a
+                  .b(fft_data_out_im), // input [15 : 0] b
+                  .p(im_square) // output [31 : 0] p
+              );
+
+// 实部与虚部功率谱累加
+// 输出位宽32位，也许会溢出
+always @(posedge clk or posedge rst)
+begin
+    if(rst == 1)
+        Power_Spec <= 0;
+    else
+        Power_Spec <= re_square + im_square;
+end
+
+//延迟dv信号4个clk，得到data_valid
+always @(posedge clk or posedge rst)
+begin
+    if(rst == 1)
+    begin
+        dv_reg1 <= 0;
+        dv_reg2 <= 0;
+        dv_reg3 <= 0;
+        data_valid <= 0;
+    end
+    else
+    begin
+        dv_reg1 <= dv;
+        dv_reg2 <= dv_reg1;
+        dv_reg3 <= dv_reg2;
+        data_valid <= dv_reg3;
+    end
+end
+
+//延迟xk_index信号4个clk，得到data_index
+always @(posedge clk or posedge rst)
+begin
+    if(rst == 1)
+    begin
+        xk_index_reg1 <= 0;
+        xk_index_reg2 <= 0;
+        xk_index_reg3 <= 0;
+        data_index <= 0;
+    end
+    else
+    begin
+        xk_index_reg1 <= xk_index;
+        xk_index_reg2 <= xk_index_reg1;
+        xk_index_reg3 <= xk_index_reg2;
+        data_index <= xk_index_reg3;
+    end
+end
 
 endmodule

@@ -72,7 +72,7 @@ user_logic_signal_processing uut (
 reg signed [15:0] mem[3999:0];
 
 initial begin
-    $readmemb("series1_1024.txt",mem);
+    $readmemb("userlogical_500H_16b.txt",mem);
 
     // Initialize Inputs
     clk_i = 0;
@@ -142,7 +142,7 @@ always #2.5 clk_i = ~clk_i;
 
 initial
 begin
-    #3000 $stop;
+    #13000 $stop;
 end
 
 endmodule

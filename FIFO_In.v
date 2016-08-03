@@ -20,9 +20,9 @@
 //////////////////////////////////////////////////////////////////////////////////
 module FIFO_in
        #( parameter
-          TOTAL_POINT = 100,	//单脉冲处理点数的一半（因为2个数据/时钟）
-          RANGEBIN_LENGTH = 25,	//每距离门处理点数
-          NFFT = 50				//补零后的FFT点数
+          TOTAL_POINT = 1000,	//单脉冲处理点数的一半（因为2个数据/时钟）
+          RANGEBIN_LENGTH = 250,	//每距离门处理点数
+          NFFT = 1024				//补零后的FFT点数
         )
        (
            //Colocking inputs
