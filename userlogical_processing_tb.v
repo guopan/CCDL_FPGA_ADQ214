@@ -85,7 +85,7 @@ initial begin
     user_register_i = 0;
 
     // Wait 100 ns for global reset to finish
-    #50;
+    #100;
     rst_i = 0;
     user_register_i = 16;
     #50;
@@ -139,10 +139,11 @@ end
 //定义时钟
 always #2.5 clk_i = ~clk_i;
 
-
+//停止仿真
 initial
 begin
-    #13000 $stop;
+    #15000 $stop;	//第一组1024点FFT完成
+	#35000 $stop;	//第八组1024点FFT完成
 end
 
 endmodule

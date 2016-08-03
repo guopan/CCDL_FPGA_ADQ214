@@ -38,17 +38,12 @@ module FIFO_in
            //Signal outputs
            output wire [15:0] data_out,
            output reg  data_valid
-           //State outputs
        );
 
 //Inter reg or wire
 wire rd_clk;
 wire wr_clk;
-// wire [9:0] rd_data_count;
-
 wire full,empty;
-// wire overflow,underflow;
-// wire wr_ack;
 
 reg wr_en;
 reg rd_en;
@@ -56,7 +51,7 @@ reg [12:0] wr_counter;		//采样点计数器,FIFO写入点数控制
 // reg [12:0] debug_counter;
 reg [12:0] BinPoint_counter;	//距离门内采样点计数器，FIFO读出补零控制
 reg [2:0] state,next_state;
-// reg dataout_ctrl;
+
 wire [31:0] din;
 wire [15:0] dout;
 wire fifo_valid;
@@ -64,15 +59,14 @@ reg  wr_counter_en;	//读写计数器的使能信号，由输入start置高，有wr_en的下降沿置低
 reg  wr_en_d;
 
 //补零控制（FIFO读出）状态机，状态定义
-parameter  IDLE = 3'b000,
-           READOUT_FIFO = 3'b001,
-           READOUT_ZERO = 3'b010,
-           READ_FINISH1 = 3'b011,
-           READ_FINISH2 = 3'b100;
+parameter  IDLE = 4'b0001,
+           READOUT_FIFO = 4'b0010,
+           OUTPUT_ZERO = 4'b0100,
+           READ_FINISH  = 4'b1000;
 
 //赋值
-assign din = wr_counter_en?data_in:32'b0;
-assign data_out = fifo_valid?dout:16'b0;
+assign din = wr_counter_en? data_in : 32'b0;
+assign data_out = fifo_valid? dout : 16'b0;
 assign rd_clk = clk;
 assign wr_clk = clk;
 
@@ -190,34 +184,31 @@ begin
         READOUT_FIFO:
         begin
             if(BinPoint_counter == RANGEBIN_LENGTH)
-                next_state = READOUT_ZERO;
+                next_state = OUTPUT_ZERO;
             else
                 next_state = READOUT_FIFO;
         end
 
-        READOUT_ZERO:
+        OUTPUT_ZERO:
         begin
             if(BinPoint_counter == NFFT)
             begin
                 if(empty == 1)
-                    next_state = READ_FINISH1;
+                    next_state = READ_FINISH;
                 else
                     next_state = READOUT_FIFO;
             end
             else
-                next_state = READOUT_ZERO;
+                next_state = OUTPUT_ZERO;
         end
 
-        READ_FINISH1:
+        READ_FINISH:
         begin
             if(BinPoint_counter == 1)
                 next_state = IDLE;
             else
-                next_state = READ_FINISH1;
+                next_state = READ_FINISH;
         end
-
-        READ_FINISH2:
-            next_state = IDLE;
 
         default:
             next_state = IDLE;
@@ -238,17 +229,12 @@ begin
             rd_en <= 1;
         end
 
-        READOUT_ZERO:
+        OUTPUT_ZERO:
         begin
             rd_en <= 0;
         end
 
-        READ_FINISH1:
-        begin
-            rd_en <= 0;
-        end
-
-        READ_FINISH2:
+        READ_FINISH:
         begin
             rd_en <= 0;
         end
