@@ -5,7 +5,7 @@
 //
 // Create Date:    11:57:34 06/01/2016
 // Design Name:
-// Module Name:    FFT_0601
+// Module Name:    Power_Spec_Cal
 // Project Name:
 // Target Devices:
 // Tool versions:
@@ -30,9 +30,11 @@ module Power_Spec_Cal(
 
            //Signal output
            output reg [31:0] Power_Spec,
-           output wire [9:0] xn_index,
+           output wire [9:0] xn_index,			//输入数据的索引值，为啥要输出？
+           output reg [9:0] xk_index_reg1,			//输出用于DPRAM的读地址
            output reg [9:0] data_index,
-           output reg data_valid
+           output reg data_valid,
+		   output wire FFT_done				//输出，用于RangeBin计数
 
        );
 
@@ -41,8 +43,8 @@ module Power_Spec_Cal(
 wire fft_rst;
 wire [9:0] scl_ch;
 wire scl_ch_we;
-wire rfd,busy,edone,done,dv;
-wire [9:0] xk_index;
+wire rfd,busy,edone,dv;
+
 wire [15:0] fft_data_out_re;
 wire [15:0] fft_data_out_im;
 //Square
@@ -50,7 +52,8 @@ wire [31:0] re_square;
 wire [31:0] im_square;
 //Other
 reg dv_reg1, dv_reg2, dv_reg3;
-reg [9:0] xk_index_reg1, xk_index_reg2, xk_index_reg3;
+wire [9:0] xk_index;
+reg [9:0] xk_index_reg2, xk_index_reg3;
 // 赋值
 assign fft_rst = rst;
 assign scl_ch = 10'b01_1010_1011;
@@ -72,7 +75,7 @@ xfft_v7_1 fft_1024_ip (
               .xn_index(xn_index), // output [9 : 0] xn_index
               .busy(busy), // output busy
               .edone(edone), // output edone
-              .done(done), // output done
+              .done(FFT_done), // output done
               .dv(dv), // output dv
               .xk_index(xk_index), // output [9 : 0] xk_index
               .xk_re(fft_data_out_re), // output [15 : 0] xk_re

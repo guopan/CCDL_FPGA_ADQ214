@@ -60,9 +60,27 @@ wire [15:0] fft_in_data;
 wire [15:0] fft_data_out_re;
 wire [15:0] fft_data_out_im;
 wire [9:0]  data_index;
-
+wire FFT_done;
 //功率谱计算
 wire [31:0] Power_Spec;
+wire data_valid_PSC;
+wire [9:0] xn_index;
+wire [9:0] xk_index_reg1;
+//双口RAM
+wire wea;
+wire [13:0] addra_dpram;
+reg [31:0] dina_dpram;
+wire [13:0] addrb_dpram;
+wire [31:0] doutb_dpram;
+
+//功率谱累加
+wire SPEC_Acc_Ctrl;
+wire DPRAM_wea;
+wire SPEC_Acc_Done;
+
+//距离门计数器
+wire [4:0] RangeBin_counts;
+
 
 // -----------------------------------------------------------------------------------------------
 // This section sets the user logic part number, which can be set in the user logic build script
@@ -126,9 +144,59 @@ Power_Spec_Cal Power_Spec_Cal_m (
                    .fifo_data(fft_in_data),
                    .Power_Spec(Power_Spec),
                    .xn_index(xn_index),
+                   .xk_index_reg1(xk_index_reg1),
                    .data_index(data_index),
-                   .data_valid(data_valid_o)
+                   .data_valid(data_valid_PSC),
+				   .FFT_done(FFT_done)
                );
+
+//功率谱存储模块，双口RAM，位宽32，深度16*1024。
+DPRAM_Buffer DPRAM_Buffer_m (
+                 .clka(clk_i), // input clka
+                 .wea(DPRAM_wea), // input [0 : 0] wea, Port A的写允许信号
+                 .addra(addra_dpram), // input [13 : 0] addra
+                 .dina(dina_dpram), // input [31 : 0] dina
+                 .clkb(clk_i), // input clkb
+                 .addrb(addrb_dpram), // input [13 : 0] addrb
+                 .doutb(doutb_dpram) // output [31 : 0] doutb
+             );
+
+//功率谱累加控制模块，从DPRAM_Buffer读出累加值，与新的功率谱数据累加后，写回原地址
+SPEC_Acc SPEC_Acc_m (
+             .clk(clk_i),
+             .rst(rst_i),
+             .data_valid_in(data_valid_PSC),
+             .xk_index_reg1(xk_index_reg1),
+             .data_index(data_index),
+             .RangeBin_Counter(RangeBin_counts),
+             .wraddr_out(addra_dpram),
+             .rdaddr_out(addrb_dpram),
+             .SPEC_Acc_Ctrl(SPEC_Acc_Ctrl),
+             .DPRAM_wea(DPRAM_wea),
+			 .SPEC_Acc_Done(SPEC_Acc_Done)
+         );
+
+//累加过程
+always @(posedge clk_i or posedge rst_i)
+begin
+    if(rst_i == 1)
+        dina_dpram <= 0;
+    else if(SPEC_Acc_Ctrl == 1)
+        // dina_dpram <= Power_Spec + doutb_dpram;
+        dina_dpram <= data_index + doutb_dpram;		//debug 用
+    else
+        // dina_dpram <= Power_Spec;		//待定
+        dina_dpram <= data_index;		//debug 用
+end
+
+//距离门计数器
+RangeBin_Counter RangeBin_Counter_m (
+    .clk(clk_i), 
+    .rst(rst_i), 
+    .cal_done(FFT_done), 
+	.SPEC_Acc_Done(SPEC_Acc_Done),
+    .bin_counts(RangeBin_counts)
+    );
 
 endmodule
 
