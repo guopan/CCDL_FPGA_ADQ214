@@ -30,11 +30,11 @@ module Power_Spec_Cal(
 
            //Signal output
            output reg [31:0] Power_Spec,
-           output wire [9:0] xn_index,			//ÊäÈëÊı¾İµÄË÷ÒıÖµ£¬ÎªÉ¶ÒªÊä³ö£¿
-           output reg [9:0] xk_index_reg1,			//Êä³öÓÃÓÚDPRAMµÄ¶ÁµØÖ·
+           output wire [9:0] xn_index,			//è¾“å…¥æ•°æ®çš„ç´¢å¼•å€¼ï¼Œä¸ºå•¥è¦è¾“å‡ºï¼Ÿ
+           output reg [9:0] xk_index_reg1,			//è¾“å‡ºç”¨äºDPRAMçš„è¯»åœ°å€
            output reg [9:0] data_index,
            output reg data_valid,
-		   output wire FFT_done				//Êä³ö£¬ÓÃÓÚRangeBin¼ÆÊı
+		   output wire FFT_done				//è¾“å‡ºï¼Œç”¨äºRangeBinè®¡æ•°
 
        );
 
@@ -54,14 +54,14 @@ wire [31:0] im_square;
 reg dv_reg1, dv_reg2, dv_reg3;
 wire [9:0] xk_index;
 reg [9:0] xk_index_reg2, xk_index_reg3;
-// ¸³Öµ
+// èµ‹å€¼
 assign fft_rst = rst;
 assign scl_ch = 10'b01_1010_1011;
 assign scl_ch_we = 1'b1;
 
-//FFTºË£¬Á÷Ë®Ïß½á¹¹£¬±ä»»³¤¶È1024µã£¬Á¬ĞøÊä³ö´¦Àí½á¹û¡£
-//ÊäÈëÎ»¿í16bit,Êä³öÎ»¿í16bit¡£
-//Êı¾İĞÎÊ½Îª¶¨µãÑ¹Ëõ£¬Ñ¹Ëõ±ÈÀısch_cl=[0110101011]¡£
+//FFTæ ¸ï¼Œæµæ°´çº¿ç»“æ„ï¼Œå˜æ¢é•¿åº¦1024ç‚¹ï¼Œè¿ç»­è¾“å‡ºå¤„ç†ç»“æœã€‚
+//è¾“å…¥ä½å®½16bit,è¾“å‡ºä½å®½16bitã€‚
+//æ•°æ®å½¢å¼ä¸ºå®šç‚¹å‹ç¼©ï¼Œå‹ç¼©æ¯”ä¾‹sch_cl=[0110101011]ã€‚
 xfft_v7_1 fft_1024_ip (
               .clk(clk), // input clk
               .start(fft_start), // input start
@@ -82,7 +82,7 @@ xfft_v7_1 fft_1024_ip (
               .xk_im(fft_data_out_im) // output [15 : 0] xk_im
           );
 
-//Êµ²¿µÄÆ½·½£¬3¼¶Á÷Ë®
+//å®éƒ¨çš„å¹³æ–¹ï¼Œ3çº§æµæ°´
 Multiplier_16 Multiplier_RE (
                   .clk(clk), // input clk
                   .a(fft_data_out_re), // input [15 : 0] a
@@ -90,7 +90,7 @@ Multiplier_16 Multiplier_RE (
                   .p(re_square) // output [31 : 0] p
               );
 
-//Ğé²¿µÄÆ½·½£¬3¼¶Á÷Ë®
+//è™šéƒ¨çš„å¹³æ–¹ï¼Œ3çº§æµæ°´
 Multiplier_16 Multiplier_IM (
                   .clk(clk), // input clk
                   .a(fft_data_out_im), // input [15 : 0] a
@@ -98,8 +98,8 @@ Multiplier_16 Multiplier_IM (
                   .p(im_square) // output [31 : 0] p
               );
 
-// Êµ²¿ÓëĞé²¿¹¦ÂÊÆ×ÀÛ¼Ó
-// Êä³öÎ»¿í32Î»£¬Ò²Ğí»áÒç³ö
+// å®éƒ¨ä¸è™šéƒ¨åŠŸç‡è°±ç´¯åŠ 
+// è¾“å‡ºä½å®½32ä½ï¼Œä¹Ÿè®¸ä¼šæº¢å‡º
 always @(posedge clk or posedge rst)
 begin
     if(rst == 1)
@@ -108,7 +108,7 @@ begin
         Power_Spec <= re_square + im_square;
 end
 
-//ÑÓ³ÙdvĞÅºÅ4¸öclk£¬µÃµ½data_valid
+//å»¶è¿Ÿdvä¿¡å·4ä¸ªclkï¼Œå¾—åˆ°data_valid
 always @(posedge clk or posedge rst)
 begin
     if(rst == 1)
@@ -127,7 +127,7 @@ begin
     end
 end
 
-//ÑÓ³Ùxk_indexĞÅºÅ4¸öclk£¬µÃµ½data_index
+//å»¶è¿Ÿxk_indexä¿¡å·4ä¸ªclkï¼Œå¾—åˆ°data_index
 always @(posedge clk or posedge rst)
 begin
     if(rst == 1)

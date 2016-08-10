@@ -61,24 +61,24 @@ wire [15:0] fft_data_out_re;
 wire [15:0] fft_data_out_im;
 wire [9:0]  data_index;
 wire FFT_done;
-//¹¦ÂÊÆ×¼ÆËã
+//åŠŸç‡è°±è®¡ç®—
 wire [31:0] Power_Spec;
 wire data_valid_PSC;
 wire [9:0] xn_index;
 wire [9:0] xk_index_reg1;
-//Ë«¿ÚRAM
+//åŒå£RAM
 wire wea;
 wire [13:0] addra_dpram;
 reg [31:0] dina_dpram;
 wire [13:0] addrb_dpram;
 wire [31:0] doutb_dpram;
 
-//¹¦ÂÊÆ×ÀÛ¼Ó
+//åŠŸç‡è°±ç´¯åŠ 
 wire SPEC_Acc_Ctrl;
 wire DPRAM_wea;
 wire SPEC_Acc_Done;
 
-//¾àÀëÃÅ¼ÆÊıÆ÷
+//è·ç¦»é—¨è®¡æ•°å™¨
 wire [4:0] RangeBin_counts;
 
 
@@ -104,7 +104,7 @@ assign fft_in_data = data_out;
 
 assign user_register_o = {(16*NofUserRegistersOut){1'b0}};
 
-//Trigger ÏòÁ¿½âÂëÄ£¿é¡£Êä³ö´¥·¢¿ªÊ¼ĞÅºÅ¡£
+//Trigger å‘é‡è§£ç æ¨¡å—ã€‚è¾“å‡ºè§¦å‘å¼€å§‹ä¿¡å·ã€‚
 Trigger_Decoder Trigger_Decoder_m (
                     .clk(clk_i),
                     .rst(rst_i),
@@ -113,8 +113,8 @@ Trigger_Decoder Trigger_Decoder_m (
                     .trigger_start(trigger_start)
                 );
 
-//FIFO_TC Ä£¿é¡£Ğ´ÈëÉî¶È1024£¬ÊäÈëÎ»¿í32bit£¬Êä³öÎ»¿í32bit£¬¶ÁĞ´Ê±ÖÓÍ¬²½¡£
-//¶ÁĞ´Ê¹ÄÜÑÓÊ±69¸öÊ±ÖÓ¡£
+//FIFO_TC æ¨¡å—ã€‚å†™å…¥æ·±åº¦1024ï¼Œè¾“å…¥ä½å®½32bitï¼Œè¾“å‡ºä½å®½32bitï¼Œè¯»å†™æ—¶é’ŸåŒæ­¥ã€‚
+//è¯»å†™ä½¿èƒ½å»¶æ—¶69ä¸ªæ—¶é’Ÿã€‚
 FIFO_TC FIFO_TC_m (
             .clk(clk_i),
             .rst(rst_i),
@@ -125,8 +125,8 @@ FIFO_TC FIFO_TC_m (
             .trigger_tc_ready(trigger_ready)
         );
 
-//FIFO_IN Ä£¿é¡£ÊäÈëÎ»¿í32bit£¬Êä³öÎ»¿í16bit£¬Ğ´ÈëÉî¶È4096¡£¶ÁĞ´Ê±ÖÓÍ¬²½¡£
-//¶ÁÊı250¸öµãºóÊä³ö²¹Áã¡£
+//FIFO_IN æ¨¡å—ã€‚è¾“å…¥ä½å®½32bitï¼Œè¾“å‡ºä½å®½16bitï¼Œå†™å…¥æ·±åº¦4096ã€‚è¯»å†™æ—¶é’ŸåŒæ­¥ã€‚
+//è¯»æ•°250ä¸ªç‚¹åè¾“å‡ºè¡¥é›¶ã€‚
 FIFO_in FIFO_in_m (
             .rst(rst_i),
             .clk(clk_i),
@@ -136,7 +136,7 @@ FIFO_in FIFO_in_m (
             .data_valid(fifo_in_valid)
         );
 
-//¹¦ÂÊÆ×¼ÆËãÄ£¿é£¬¼ÆËã1024µãFFT£¬¼°Æä¹¦ÂÊÆ×¡£
+//åŠŸç‡è°±è®¡ç®—æ¨¡å—ï¼Œè®¡ç®—1024ç‚¹FFTï¼ŒåŠå…¶åŠŸç‡è°±ã€‚
 Power_Spec_Cal Power_Spec_Cal_m (
                    .clk(clk_i),
                    .rst(rst_i),
@@ -150,10 +150,10 @@ Power_Spec_Cal Power_Spec_Cal_m (
 				   .FFT_done(FFT_done)
                );
 
-//¹¦ÂÊÆ×´æ´¢Ä£¿é£¬Ë«¿ÚRAM£¬Î»¿í32£¬Éî¶È16*1024¡£
+//åŠŸç‡è°±å­˜å‚¨æ¨¡å—ï¼ŒåŒå£RAMï¼Œä½å®½32ï¼Œæ·±åº¦16*1024ã€‚
 DPRAM_Buffer DPRAM_Buffer_m (
                  .clka(clk_i), // input clka
-                 .wea(DPRAM_wea), // input [0 : 0] wea, Port AµÄĞ´ÔÊĞíĞÅºÅ
+                 .wea(DPRAM_wea), // input [0 : 0] wea, Port Açš„å†™å…è®¸ä¿¡å·
                  .addra(addra_dpram), // input [13 : 0] addra
                  .dina(dina_dpram), // input [31 : 0] dina
                  .clkb(clk_i), // input clkb
@@ -161,7 +161,7 @@ DPRAM_Buffer DPRAM_Buffer_m (
                  .doutb(doutb_dpram) // output [31 : 0] doutb
              );
 
-//¹¦ÂÊÆ×ÀÛ¼Ó¿ØÖÆÄ£¿é£¬´ÓDPRAM_Buffer¶Á³öÀÛ¼ÓÖµ£¬ÓëĞÂµÄ¹¦ÂÊÆ×Êı¾İÀÛ¼Óºó£¬Ğ´»ØÔ­µØÖ·
+//åŠŸç‡è°±ç´¯åŠ æ§åˆ¶æ¨¡å—ï¼Œä»DPRAM_Bufferè¯»å‡ºç´¯åŠ å€¼ï¼Œä¸æ–°çš„åŠŸç‡è°±æ•°æ®ç´¯åŠ åï¼Œå†™å›åŸåœ°å€
 SPEC_Acc SPEC_Acc_m (
              .clk(clk_i),
              .rst(rst_i),
@@ -176,20 +176,20 @@ SPEC_Acc SPEC_Acc_m (
 			 .SPEC_Acc_Done(SPEC_Acc_Done)
          );
 
-//ÀÛ¼Ó¹ı³Ì
+//ç´¯åŠ è¿‡ç¨‹
 always @(posedge clk_i or posedge rst_i)
 begin
     if(rst_i == 1)
         dina_dpram <= 0;
     else if(SPEC_Acc_Ctrl == 1)
         // dina_dpram <= Power_Spec + doutb_dpram;
-        dina_dpram <= data_index + doutb_dpram;		//debug ÓÃ
+        dina_dpram <= data_index + doutb_dpram;		//debug ç”¨
     else
-        // dina_dpram <= Power_Spec;		//´ı¶¨
-        dina_dpram <= data_index;		//debug ÓÃ
+        // dina_dpram <= Power_Spec;		//å¾…å®š
+        dina_dpram <= data_index;		//debug ç”¨
 end
 
-//¾àÀëÃÅ¼ÆÊıÆ÷
+//è·ç¦»é—¨è®¡æ•°å™¨
 RangeBin_Counter RangeBin_Counter_m (
     .clk(clk_i), 
     .rst(rst_i), 

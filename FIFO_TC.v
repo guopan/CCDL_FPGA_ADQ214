@@ -39,11 +39,11 @@ reg   [12:0] din_counter;
 wire full;
 wire empty;
 
-// ¸³Öµ
+// èµ‹å€¼
 assign wr_en = ~rst;
 assign data_in = {x0_i,x0z_i};
 
-// ¼ÆÊýÆ÷
+// è®¡æ•°å™¨
 always @(posedge clk or posedge rst)
 begin
     if(rst == 1)
@@ -54,7 +54,7 @@ begin
         din_counter <= din_counter;
 end
 
-// ¶ÁÐÅºÅÑÓ³Ù¿ØÖÆ
+// è¯»ä¿¡å·å»¶è¿ŸæŽ§åˆ¶
 always @(posedge clk or posedge rst)
 begin
     if(rst == 1)
@@ -65,7 +65,7 @@ begin
         rd_en <= 1;
 end
 
-//FIFO»º´æ½áÊø£¬·¢³ö´¥·¢ÔÊÐíÐÅºÅ
+//FIFOç¼“å­˜ç»“æŸï¼Œå‘å‡ºè§¦å‘å…è®¸ä¿¡å·
 always @(posedge clk or posedge rst)
 begin
     if(rst == 1)
@@ -74,7 +74,7 @@ begin
         trigger_tc_ready <= rd_en;
 end
 
-//FIFO IP Ð´ÈëÉî¶È1024£¬ÊäÈëÎ»¿í32bit£¬Êä³öÎ»¿í32bit£¬¶ÁÐ´Ê±ÖÓÍ¬²½
+//FIFO IP å†™å…¥æ·±åº¦1024ï¼Œè¾“å…¥ä½å®½32bitï¼Œè¾“å‡ºä½å®½32bitï¼Œè¯»å†™æ—¶é’ŸåŒæ­¥
 Fifo_Buffer_Tc Fifo_Buffer_Tc_m (
                    .clk(clk), // input clk
                    .rst(rst), // input rst

@@ -31,7 +31,7 @@ reg cal_done_reg1;
 reg cal_done_reg2;
 reg cal_done_reg3;
 
-//距离门计数器
+//璺濈闂ㄨ鏁板櫒
 always @(posedge clk or posedge rst)
 begin
     if(rst == 1)
@@ -46,7 +46,7 @@ begin
         bin_counts <= bin_counts;
 end
 
-//延迟cal_done信号3个clk，得到cal_done_reg3
+//寤惰繜cal_done淇″彿3涓猚lk锛屽緱鍒癱al_done_reg3
 always @(posedge clk or posedge rst)
 begin
     if(rst == 1)

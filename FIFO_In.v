@@ -20,9 +20,9 @@
 //////////////////////////////////////////////////////////////////////////////////
 module FIFO_in
        #( parameter
-          TOTAL_POINT = 1000,	//µ¥Âö³å´¦ÀíµãÊıµÄÒ»°ë£¨ÒòÎª2¸öÊı¾İ/Ê±ÖÓ£©
-          RANGEBIN_LENGTH = 250,	//Ã¿¾àÀëÃÅ´¦ÀíµãÊı
-          NFFT = 1024				//²¹ÁãºóµÄFFTµãÊı
+          TOTAL_POINT = 1000,	//å•è„‰å†²å¤„ç†ç‚¹æ•°çš„ä¸€åŠï¼ˆå› ä¸º2ä¸ªæ•°æ®/æ—¶é’Ÿï¼‰
+          RANGEBIN_LENGTH = 250,	//æ¯è·ç¦»é—¨å¤„ç†ç‚¹æ•°
+          NFFT = 1024				//è¡¥é›¶åçš„FFTç‚¹æ•°
         )
        (
            //Colocking inputs
@@ -47,32 +47,32 @@ wire full,empty;
 
 reg wr_en;
 reg rd_en;
-reg [12:0] wr_counter;		//²ÉÑùµã¼ÆÊıÆ÷,FIFOĞ´ÈëµãÊı¿ØÖÆ
+reg [12:0] wr_counter;		//é‡‡æ ·ç‚¹è®¡æ•°å™¨,FIFOå†™å…¥ç‚¹æ•°æ§åˆ¶
 // reg [12:0] debug_counter;
-reg [12:0] BinPoint_counter;	//¾àÀëÃÅÄÚ²ÉÑùµã¼ÆÊıÆ÷£¬FIFO¶Á³ö²¹Áã¿ØÖÆ
+reg [12:0] BinPoint_counter;	//è·ç¦»é—¨å†…é‡‡æ ·ç‚¹è®¡æ•°å™¨ï¼ŒFIFOè¯»å‡ºè¡¥é›¶æ§åˆ¶
 reg [2:0] state,next_state;
 
 wire [31:0] din;
 wire [15:0] dout;
 wire fifo_valid;
-reg  wr_counter_en;	//¶ÁĞ´¼ÆÊıÆ÷µÄÊ¹ÄÜĞÅºÅ£¬ÓÉÊäÈëstartÖÃ¸ß£¬ÓĞwr_enµÄÏÂ½µÑØÖÃµÍ
+reg  wr_counter_en;	//è¯»å†™è®¡æ•°å™¨çš„ä½¿èƒ½ä¿¡å·ï¼Œç”±è¾“å…¥startç½®é«˜ï¼Œæœ‰wr_ençš„ä¸‹é™æ²¿ç½®ä½
 reg  wr_en_d;
 
-//²¹Áã¿ØÖÆ£¨FIFO¶Á³ö£©×´Ì¬»ú£¬×´Ì¬¶¨Òå
+//è¡¥é›¶æ§åˆ¶ï¼ˆFIFOè¯»å‡ºï¼‰çŠ¶æ€æœºï¼ŒçŠ¶æ€å®šä¹‰
 parameter  IDLE = 4'b0001,
            READOUT_FIFO = 4'b0010,
            OUTPUT_ZERO = 4'b0100,
            READ_FINISH  = 4'b1000;
 
-//¸³Öµ
+//èµ‹å€¼
 assign din = wr_counter_en? data_in : 32'b0;
 assign data_out = fifo_valid? dout : 16'b0;
 assign rd_clk = clk;
 assign wr_clk = clk;
 
-//Éú³ÉĞ´Èë¼ÆÊıÆ÷µÄÊ¹ÄÜĞÅºÅ
-//ÓÉstart´¥·¢ÆäÖÃ¸ß
-//ÓÉwr_enµÄÏÂ½µÑØÇåÁã
+//ç”Ÿæˆå†™å…¥è®¡æ•°å™¨çš„ä½¿èƒ½ä¿¡å·
+//ç”±startè§¦å‘å…¶ç½®é«˜
+//ç”±wr_ençš„ä¸‹é™æ²¿æ¸…é›¶
 always @(posedge clk or posedge rst)
 begin
     if(rst == 1)
@@ -85,12 +85,12 @@ begin
         wr_counter_en <= wr_counter_en;
 end
 
-//Éú³ÉÊı¾İÊä³öÓĞĞ§ĞÅºÅdata_valid
+//ç”Ÿæˆæ•°æ®è¾“å‡ºæœ‰æ•ˆä¿¡å·data_valid
 always @(posedge clk or posedge rst)
 begin
     if(rst == 1)
         data_valid <= 0;
-    else if(rd_en == 1 && fifo_valid == 0)	//rd_enµÄÉÏÉıÑØÖÃ¸ß
+    else if(rd_en == 1 && fifo_valid == 0)	//rd_ençš„ä¸Šå‡æ²¿ç½®é«˜
         data_valid <= 1;
     else if(state == IDLE)
         data_valid <= 0;
@@ -98,7 +98,7 @@ begin
         data_valid <= data_valid;
 end
 
-//²ÉÑùµã¼ÆÊıÆ÷
+//é‡‡æ ·ç‚¹è®¡æ•°å™¨
 always @(posedge clk or posedge rst)
 begin
     if(rst == 1)
@@ -111,7 +111,7 @@ begin
         wr_counter <= wr_counter + 1;
 end
 
-//debugµã¼ÆÊıÆ÷,±Èdata_outÍíÒ»¸öÊ±ÖÓ
+//debugç‚¹è®¡æ•°å™¨,æ¯”data_outæ™šä¸€ä¸ªæ—¶é’Ÿ
 // always @(posedge clk or posedge rst)
 // begin
 // if(rst == 1)
@@ -124,7 +124,7 @@ end
 // debug_counter <= debug_counter + 1;
 // end
 
-//Éú³ÉFIFOĞ´Èë¿ØÖÆĞÅºÅwr_en
+//ç”ŸæˆFIFOå†™å…¥æ§åˆ¶ä¿¡å·wr_en
 always @(posedge clk or posedge rst)
 begin
     if(rst == 1)
@@ -137,7 +137,7 @@ begin
         wr_en <= 1;
 end
 
-//ÑÓ³Ùwr_enĞÅºÅ1¸öclk£¬µÃµ½wr_en_d
+//å»¶è¿Ÿwr_enä¿¡å·1ä¸ªclkï¼Œå¾—åˆ°wr_en_d
 always @(posedge clk or posedge rst)
 begin
     if(rst == 1)
@@ -146,9 +146,9 @@ begin
         wr_en_d <= wr_en;
 end
 
-//¶Á¿ØÖÆ¼ÆÊıÑ­»·
-//ÔÚIDLE×´Ì¬Ê±£¬emptyµÄÏÂ½µÑØ¿ªÊ¼¼ÆÊı
-//ÔÙ´Î»Øµ½IDLE×´Ì¬Ê±£¬Í£Ö¹¼ÆÊı
+//è¯»æ§åˆ¶è®¡æ•°å¾ªç¯
+//åœ¨IDLEçŠ¶æ€æ—¶ï¼Œemptyçš„ä¸‹é™æ²¿å¼€å§‹è®¡æ•°
+//å†æ¬¡å›åˆ°IDLEçŠ¶æ€æ—¶ï¼Œåœæ­¢è®¡æ•°
 always @(posedge clk or posedge rst)
 begin
     if(rst == 1)
@@ -169,7 +169,7 @@ begin
         state <= next_state;
 end
 
-//×´Ì¬×ª»»Ìõ¼şÃèÊö
+//çŠ¶æ€è½¬æ¢æ¡ä»¶æè¿°
 always@(state,empty,BinPoint_counter)
 begin
     case(state)
@@ -215,7 +215,7 @@ begin
     endcase
 end
 
-//×´Ì¬Êä³öÃèÊö
+//çŠ¶æ€è¾“å‡ºæè¿°
 always@(posedge clk)
 begin
     case(state)
@@ -248,8 +248,8 @@ begin
 end
 
 //FIFO IN IP
-//ÊäÈëÎ»¿í32bit£¬Êä³öÎ»¿í16bit£¬Ğ´ÈëÉî¶È4096¡£¶ÁĞ´Ê±ÖÓÍ¬²½¡£
-//Éî¶È2048¾Í¹»ÁË
+//è¾“å…¥ä½å®½32bitï¼Œè¾“å‡ºä½å®½16bitï¼Œå†™å…¥æ·±åº¦4096ã€‚è¯»å†™æ—¶é’ŸåŒæ­¥ã€‚
+//æ·±åº¦2048å°±å¤Ÿäº†
 fifo_Buffer_in Fifo_Buffer_in_m (
                         .rst(rst), // input rst
                         .wr_clk(wr_clk), // input wr_clk

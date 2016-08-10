@@ -27,7 +27,7 @@ module Trigger_Decoder(
        );
 
 
-//Êä³ö´¥·¢ĞÅºÅ
+//è¾“å‡ºè§¦å‘ä¿¡å·
 always @(posedge clk or posedge rst)
 begin
     if(rst == 1)
