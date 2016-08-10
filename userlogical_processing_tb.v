@@ -75,7 +75,7 @@ user_logic_signal_processing uut (
 reg signed [15:0] mem[3999:0];
 
 initial begin
-    $readmemb("userlogical_500H_16b.txt",mem);
+    $readmemb("sinewave.txt",mem);
 
     // Initialize Inputs
     clk_i = 0;
@@ -155,6 +155,11 @@ end
 initial
 begin
     output_file = $fopen("..\\..\\source\\Matlab_verify\\FFT_SPEC_out.txt","w");
+	if (!output_file)
+		begin
+			$display("Could not open \"FFT_SPEC_out.txt\"");
+			$stop;
+		end
 end
 
 //将第一个脉冲的功率谱计算结果写入文件
