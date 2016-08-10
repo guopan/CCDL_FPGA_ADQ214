@@ -19,8 +19,8 @@
 //
 //////////////////////////////////////////////////////////////////////////////////
 module Trigger_Decoder(
-           input clk,
-           input rst,
+           input wire clk,
+           input wire rst,
            input wire trigger_ready,
            input wire [3:0] trigger_vector,
            output reg trigger_start

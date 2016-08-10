@@ -36,6 +36,8 @@ reg   rd_en;
 wire  wr_en;
 wire  [31:0] data_in;
 reg   [12:0] din_counter;
+wire full;
+wire empty;
 
 // 赋值
 assign wr_en = ~rst;
@@ -74,15 +76,15 @@ end
 
 //FIFO IP 写入深度1024，输入位宽32bit，输出位宽32bit，读写时钟同步
 Fifo_Buffer_Tc Fifo_Buffer_Tc_m (
-                           .clk(clk), // input clk
-                           .rst(rst), // input rst
-                           .din(data_in), // input [31 : 0] din
-                           .wr_en(wr_en), // input wr_en
-                           .rd_en(rd_en), // input rd_en
-                           .dout(fifo_tc_dataout), // output [31 : 0] dout
-                           .full(full), // output full
-                           .empty(empty) // output empty
-                           // .valid(valid) // output valid
-                       );
+                   .clk(clk), // input clk
+                   .rst(rst), // input rst
+                   .din(data_in), // input [31 : 0] din
+                   .wr_en(wr_en), // input wr_en
+                   .rd_en(rd_en), // input rd_en
+                   .dout(fifo_tc_dataout), // output [31 : 0] dout
+                   .full(full), // output full
+                   .empty(empty) // output empty
+                   // .valid(valid) // output valid
+               );
 
 endmodule

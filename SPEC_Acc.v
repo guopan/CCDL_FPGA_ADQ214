@@ -19,13 +19,13 @@
 //
 //////////////////////////////////////////////////////////////////////////////////
 module SPEC_Acc(
-    input clk,
-    input rst,
+    input wire clk,
+    input wire rst,
     // input [31:0] data_in,
-	input data_valid_in,
-    input [9:0] xk_index_reg1,			//比data_index早3个或4个时钟，用于生成读地址
-    input [9:0] data_index,
-	input [4:0] RangeBin_Counter,
+	input wire data_valid_in,
+    input wire [9:0] xk_index_reg1,			//比data_index早3个或4个时钟，用于生成读地址
+    input wire [9:0] data_index,
+	input wire [4:0] RangeBin_Counter,
 	
     output reg [13:0] wraddr_out,
     output reg [13:0] rdaddr_out,
