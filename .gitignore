@@ -77,3 +77,6 @@ ngc/
 
 # istyle formatter backup files
 *.orig
+
+# Stimulus and Resuslt files 
+*.txt

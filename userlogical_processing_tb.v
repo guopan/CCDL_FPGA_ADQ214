@@ -46,6 +46,9 @@ wire [15:0] ul_partnum_2_o;
 wire [15:0] ul_partnum_3_o;
 wire [15:0] ul_partnum_rev_o;
 
+// 文件句柄
+integer output_file;
+
 // Instantiate the Unit Under Test (UUT)
 user_logic_signal_processing uut (
                                  .clk_i(clk_i),
@@ -114,7 +117,7 @@ end
 //为模块输入端口赋值
 integer rp = 0;
 integer rp_z = 1;
-always@(posedge clk_i)
+always @(posedge clk_i)
 begin
     if(rp < 4000)
     begin
@@ -125,7 +128,7 @@ begin
         x0_i = 0;
 end
 
-always@(posedge clk_i)
+always @(posedge clk_i)
 begin
     if(rp_z < 4000)
     begin
@@ -142,8 +145,23 @@ always #2.5 clk_i = ~clk_i;
 //停止仿真
 initial
 begin
-    #15000 $stop;	//第一组1024点FFT完成
-	#35000 $stop;	//第八组1024点FFT完成
+    #15000 ;//$stop;	//第一组1024点FFT完成
+    #35000 ;//$stop;	//第八组1024点FFT完成
+	$fclose(output_file);
+	$finish;
+end
+
+// 文件打开
+initial
+begin
+    output_file = $fopen("..\\..\\source\\Matlab_verify\\FFT_SPEC_out.txt","w");
+end
+
+//将第一个脉冲的功率谱计算结果写入文件
+always @(posedge clk_i)
+begin
+    if(uut.Power_Spec_Cal_m.data_valid)
+        $fwrite(output_file,"%d\t%d\n",uut.SPEC_Acc_m.data_index,uut.Power_Spec_Cal_m.Power_Spec);
 end
 
 endmodule
