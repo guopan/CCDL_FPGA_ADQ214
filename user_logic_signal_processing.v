@@ -45,42 +45,47 @@ module user_logic_signal_processing
 
 //Inter wire or reg
 //TR
-wire trigger_valid;
-wire trigger_ready;
 wire trigger_start;
 //TC
-wire fifo_tc_valid;
 wire [31:0] fifo_tc_dataout;
+wire trigger_ready;
+
 //IN
 wire [31:0] fifo_in_data;
 wire [15:0] data_out;
 wire fifo_in_valid;
 //FFT
 wire [15:0] fft_in_data;
-wire [15:0] fft_data_out_re;
-wire [15:0] fft_data_out_im;
+
 wire [9:0]  data_index;
 wire FFT_done;
-//功率谱计算
+// 功率谱计算
 wire [31:0] Power_Spec;
 wire data_valid_PSC;
 wire [9:0] xn_index;
 wire [9:0] xk_index_reg1;
-//双口RAM
-wire wea;
+// 双口RAM
 wire [13:0] addra_dpram;
-reg [31:0] dina_dpram;
+reg  [31:0] dina_dpram;
 wire [13:0] addrb_dpram;
 wire [31:0] doutb_dpram;
 
-//功率谱累加
+reg  [31:0] dina_dpram_BG;
+wire [31:0] doutb_dpram_BG;
+
+// 功率谱累加
 wire SPEC_Acc_Ctrl;
 wire DPRAM_wea;
+wire DPRAM_BG_wea;
 wire SPEC_Acc_Done;
 
-//距离门计数器
+// 距离门计数器
 wire [4:0] RangeBin_counts;
 
+// 脉冲计数器
+wire [15:0] Pulse_counts;
+
+wire Capture_En;
 
 // -----------------------------------------------------------------------------------------------
 // This section sets the user logic part number, which can be set in the user logic build script
@@ -93,8 +98,8 @@ assign ul_partnum_3_o      = `USER_LOGIC_PARTNUM_3;
 assign ul_partnum_rev_o    = `USER_LOGIC_PARTNUM_REV;
 // -----------------------------------------------------------------------------------------------
 
-assign y0_o = fft_data_out_re;
-assign y0z_o = fft_data_out_im;
+assign y0_o = doutb_dpram[15:0];
+assign y0z_o = doutb_dpram[31:16];
 assign y1_o = x1_i;
 assign y1z_o = x1z_i;
 assign trigger_vector_o = trigger_vector_i;
@@ -104,7 +109,9 @@ assign fft_in_data = data_out;
 
 assign user_register_o = {(16*NofUserRegistersOut){1'b0}};
 
-//Trigger 向量解码模块。输出触发开始信号。
+assign data_valid_o = data_valid_PSC;		// 临时赋值，待修正
+
+// Trigger 向量解码模块。输出触发开始信号。
 Trigger_Decoder Trigger_Decoder_m (
                     .clk(clk_i),
                     .rst(rst_i),
@@ -113,8 +120,8 @@ Trigger_Decoder Trigger_Decoder_m (
                     .trigger_start(trigger_start)
                 );
 
-//FIFO_TC 模块。写入深度1024，输入位宽32bit，输出位宽32bit，读写时钟同步。
-//读写使能延时69个时钟。
+// FIFO_TC 模块。写入深度1024，输入位宽32bit，输出位宽32bit，读写时钟同步。
+// 读写使能延时69个时钟。
 FIFO_TC FIFO_TC_m (
             .clk(clk_i),
             .rst(rst_i),
@@ -125,8 +132,8 @@ FIFO_TC FIFO_TC_m (
             .trigger_tc_ready(trigger_ready)
         );
 
-//FIFO_IN 模块。输入位宽32bit，输出位宽16bit，写入深度4096。读写时钟同步。
-//读数250个点后输出补零。
+// FIFO_IN 模块。输入位宽32bit，输出位宽16bit，写入深度4096。读写时钟同步。
+// 读数250个点后输出补零。
 FIFO_in FIFO_in_m (
             .rst(rst_i),
             .clk(clk_i),
@@ -136,7 +143,7 @@ FIFO_in FIFO_in_m (
             .data_valid(fifo_in_valid)
         );
 
-//功率谱计算模块，计算1024点FFT，及其功率谱。
+// 功率谱计算模块，计算1024点FFT，及其功率谱。
 Power_Spec_Cal Power_Spec_Cal_m (
                    .clk(clk_i),
                    .rst(rst_i),
@@ -150,18 +157,31 @@ Power_Spec_Cal Power_Spec_Cal_m (
 				   .FFT_done(FFT_done)
                );
 
-//功率谱存储模块，双口RAM，位宽32，深度16*1024。
+// 功率谱存储模块，双口RAM，位宽32，深度16*1024。
 DPRAM_Buffer DPRAM_Buffer_m (
-                 .clka(clk_i), // input clka
-                 .wea(DPRAM_wea), // input [0 : 0] wea, Port A的写允许信号
-                 .addra(addra_dpram), // input [13 : 0] addra
-                 .dina(dina_dpram), // input [31 : 0] dina
-                 .clkb(clk_i), // input clkb
-                 .addrb(addrb_dpram), // input [13 : 0] addrb
-                 .doutb(doutb_dpram) // output [31 : 0] doutb
+                 .clka(clk_i), 				// input clka
+                 .wea(DPRAM_wea), 			// input [0 : 0] wea, Port A的写允许信号
+                 .addra(addra_dpram), 		// input [13 : 0] addra
+                 .dina(dina_dpram), 		// input [31 : 0] dina
+                 .clkb(clk_i), 				// input clkb
+                 .addrb(addrb_dpram), 		// input [13 : 0] addrb
+                 .doutb(doutb_dpram) 		// output [31 : 0] doutb
              );
+			 
+// 背景噪声功率谱存储模块，双口RAM，位宽32，深度1024。
+DPRAM_Buffer_BG DPRAM_Buffer_BG_m (
+  .clka(clk_i), 				// input clka
+  .wea(DPRAM_BG_wea), 			// input [0 : 0] wea
+  .addra(addra_dpram[9:0]), 	// input [9 : 0] addra
+  .dina(dina_dpram_BG), 		// input [31 : 0] dina
+  .clkb(clk_i), 				// input clkb
+  .addrb(addrb_dpram[9:0]), 	// input [9 : 0] addrb
+  .doutb(doutb_dpram_BG) 		// output [31 : 0] doutb
+);
 
-//功率谱累加控制模块，从DPRAM_Buffer读出累加值，与新的功率谱数据累加后，写回原地址
+			 
+			 
+// 功率谱累加控制模块，从DPRAM_Buffer读出累加值，与新的功率谱数据累加后，写回原地址
 SPEC_Acc SPEC_Acc_m (
              .clk(clk_i),
              .rst(rst_i),
@@ -171,12 +191,12 @@ SPEC_Acc SPEC_Acc_m (
              .RangeBin_Counter(RangeBin_counts),
              .wraddr_out(addra_dpram),
              .rdaddr_out(addrb_dpram),
-             .SPEC_Acc_Ctrl(SPEC_Acc_Ctrl),
              .DPRAM_wea(DPRAM_wea),
+             .DPRAM_BG_wea(DPRAM_BG_wea),
 			 .SPEC_Acc_Done(SPEC_Acc_Done)
          );
 
-//累加过程
+// 累加过程_DPRAM
 always @(posedge clk_i or posedge rst_i)
 begin
     if(rst_i == 1)
@@ -189,7 +209,20 @@ begin
         dina_dpram <= data_index;		//debug 用
 end
 
-//距离门计数器
+// 累加过程_DPRAM_BG
+always @(posedge clk_i or posedge rst_i)
+begin
+    if(rst_i == 1)
+        dina_dpram_BG <= 0;
+    else if(SPEC_Acc_Ctrl == 1)
+        // dina_dpram_BG <= Power_Spec + doutb_dpram_BG;
+        dina_dpram_BG <= data_index + doutb_dpram_BG;		//debug 用
+    else
+        // dina_dpram_BG <= Power_Spec;		//待定
+        dina_dpram_BG <= data_index;		//debug 用
+end
+
+// 距离门计数器
 RangeBin_Counter RangeBin_Counter_m (
     .clk(clk_i), 
     .rst(rst_i), 
@@ -198,6 +231,24 @@ RangeBin_Counter RangeBin_Counter_m (
     .bin_counts(RangeBin_counts)
     );
 
+// 整组数据的时序控制
+Group_Ctrl Group_Ctrl_m (
+    .clk(clk_i), 
+    .rst(rst_i), 
+    .Pulse_counts(Pulse_counts), 
+    .Capture_En(Capture_En), 
+    .SPEC_Acc_Ctrl(SPEC_Acc_Ctrl)
+    );
+	
+// 脉冲计数器
+Pulse_Counter Pulse_Counter_m (
+    .clk(clk_i), 
+    .rst(rst_i), 
+    .SPEC_Acc_Done(SPEC_Acc_Done), 
+    .Capture_En(Capture_En), 
+    .Pulse_counts(Pulse_counts)
+    );
+	
 endmodule
 
 

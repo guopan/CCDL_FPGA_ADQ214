@@ -40,6 +40,7 @@ wire [15:0] y0z_o;
 wire [15:0] y1_o;
 wire [15:0] y1z_o;
 wire [3:0] trigger_vector_o;
+wire data_valid_o;
 wire [63:0] user_register_o;
 wire [15:0] ul_partnum_1_o;
 wire [15:0] ul_partnum_2_o;
@@ -63,6 +64,7 @@ user_logic_signal_processing uut (
                                  .y1_o(),
                                  .y1z_o(),
                                  .trigger_vector_o(trigger_vector_o),
+                                 .data_valid_o(data_valid_o),
                                  .user_register_i(user_register_i),
                                  .user_register_o(user_register_o),
                                  .ul_partnum_1_o(ul_partnum_1_o),
@@ -71,14 +73,24 @@ user_logic_signal_processing uut (
                                  .ul_partnum_rev_o(ul_partnum_rev_o)
                              );
 
+integer loop_i;
+reg pulse_tic;		// 脉冲重复间隔信号，10kHz，100μs
+
 //读取数据
 reg signed [15:0] mem[3999:0];
 
+// 生成脉冲重复间隔信号
 initial begin
-    $readmemb("sinewave.txt",mem);
+	pulse_tic = 0;
+	repeat(100) @ (posedge clk_i);	//初始延迟
+	pulse_tic = 1;
+	forever # 50000 pulse_tic = ~ pulse_tic;
+end
 
+// 主要测试激励
+initial begin
     // Initialize Inputs
-    clk_i = 0;
+    clk_i = 1;
     rst_i = 1;
     x0_i = 0;
     x0z_i = 0;
@@ -86,88 +98,98 @@ initial begin
     x1z_i = 0;
     trigger_vector_i = 0;
     user_register_i = 0;
+	
+    $readmemb("sinewave.txt",mem);
 
     // Wait 100 ns for global reset to finish
     #100;
     rst_i = 0;
     user_register_i = 16;
-    #50;
-    trigger_vector_i = 4'b0001;
-    #5;
-    trigger_vector_i = 4'b0000;
-    #200;
-    trigger_vector_i = 4'b0100;
-    #5;
-    trigger_vector_i = 4'b0000;
-    #200;
-    trigger_vector_i = 4'b1000;
-    #5;
-    trigger_vector_i = 4'b0000;
-    #200;
-    trigger_vector_i = 4'b1000;
-    #5;
-    trigger_vector_i = 4'b0000;
-    #90000;
-    rst_i = 1;
-
+	
     // Add stimulus here
+    #150;
+    emit_1trigger(4'b0001);
+
+
+    #300000;
+    rst_i = 1;
+	#5 rst_i = 0;
+	
+	#100000;
+	$finish;
 
 end
 
-//为模块输入端口赋值
-integer rp = 0;
-integer rp_z = 1;
-always @(posedge clk_i)
+//周期性测试激励
+always @(posedge pulse_tic)
 begin
-    if(rp < 4000)
-    begin
-        x0_i = mem[rp];
-        rp = rp + 2;
-    end
-    else
-        x0_i = 0;
-end
-
-always @(posedge clk_i)
-begin
-    if(rp_z < 4000)
-    begin
-        x0z_i = mem[rp_z];
-        rp_z = rp_z + 2;
-    end
-    else
-        x0z_i = 0;
+	emit_1pulse(69,4'b0100);
 end
 
 //定义时钟
-always #2.5 clk_i = ~clk_i;
+always #2.5 clk_i = ~clk_i;	//	200MHz
 
 //停止仿真
 initial
 begin
     #15000 ;//$stop;	//第一组1024点FFT完成
     #35000 ;//$stop;	//第八组1024点FFT完成
-	$fclose(output_file);
-	$finish;
+    $fclose(output_file);
+    // $finish;
 end
 
 // 文件打开
 initial
 begin
     output_file = $fopen("..\\..\\source\\Matlab_verify\\FFT_SPEC_out.txt","w");
-	if (!output_file)
-		begin
-			$display("Could not open \"FFT_SPEC_out.txt\"");
-			$stop;
-		end
+    if (!output_file)
+    begin
+        $display("Could not open \"FFT_SPEC_out.txt\"");
+        $stop;
+    end
 end
 
-//将第一个脉冲的功率谱计算结果写入文件
+// 将第一个脉冲的功率谱计算结果写入文件
 always @(posedge clk_i)
 begin
     if(uut.Power_Spec_Cal_m.data_valid)
         $fwrite(output_file,"%d\t%d\n",uut.SPEC_Acc_m.data_index,uut.Power_Spec_Cal_m.Power_Spec);
 end
+
+// 【TASK】读出mem中的数据，赋给 x0_i 和 x0z_i
+task mem_data_output;
+    input [31:0] tics;			// 读出数据的数量，不超过4000的一半
+    begin
+        loop_i = 0;
+        repeat (tics) @ (posedge clk_i)
+        begin
+            x0_i = mem[loop_i];
+            x0z_i = mem[loop_i+1];
+            loop_i = loop_i + 2;
+        end
+		loop_i = 0;
+    end
+endtask
+
+// 【TASK】生成单个触发向量
+task emit_1trigger;
+    input [3:0] trigger_vector;		//触发向量
+    begin
+		@ (posedge clk_i) trigger_vector_i = trigger_vector;
+        # 5 trigger_vector_i = 0;
+    end
+endtask
+
+// 【TASK】生成单个脉冲的输入信号，包含触发与数据两部分
+task emit_1pulse;
+    input [15:0] Pre_trigger_clks;		// 触发到数据的延迟时钟数
+    input [3:0] trigger_vector;		//触发向量
+    begin
+		emit_1trigger(trigger_vector);
+        repeat (Pre_trigger_clks) @ (posedge clk_i);
+        mem_data_output(4000);
+    end
+endtask
 
 endmodule
 
