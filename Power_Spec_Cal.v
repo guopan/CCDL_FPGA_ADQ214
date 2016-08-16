@@ -29,9 +29,9 @@ module Power_Spec_Cal(
            input wire [15:0] fifo_data,
 
            //Signal output
-           output reg [31:0] Power_Spec,
+           output reg [31:0] Power_Spec,		//功率谱计算结果
            output wire [9:0] xn_index,			//输入数据的索引值，为啥要输出？
-           output reg [9:0] xk_index_reg1,			//输出用于DPRAM的读地址
+           output reg [9:0] xk_index_reg1,		//输出用于DPRAM的读地址
            output reg [9:0] data_index,
            output reg data_valid,
 		   output wire FFT_done				//输出，用于RangeBin计数

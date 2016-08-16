@@ -20,11 +20,10 @@
 //////////////////////////////////////////////////////////////////////////////////
 module FIFO_TC
        #(parameter
-         DELAY_NUM = 69)
+         DELAY_NUM = 69+4)		// +4 是为了匹配 FIFO_in 的读出延迟
        (
            input wire clk,
            input wire rst,
-           input wire [3:0]   trigger,
            input wire [15:0]	x0_i,
            input wire [15:0]	x0z_i,
            output wire [31:0]	fifo_tc_dataout,

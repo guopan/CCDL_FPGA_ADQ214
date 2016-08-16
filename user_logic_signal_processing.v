@@ -125,7 +125,6 @@ Trigger_Decoder Trigger_Decoder_m (
 FIFO_TC FIFO_TC_m (
             .clk(clk_i),
             .rst(rst_i),
-            .trigger(trigger_start),
             .x0_i(x0_i),
             .x0z_i(x0z_i),
             .fifo_tc_dataout(fifo_tc_dataout),
