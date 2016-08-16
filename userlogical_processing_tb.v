@@ -108,7 +108,7 @@ initial begin
 	
     // Add stimulus here
     #150;
-    emit_1trigger(4'b0001,0);
+    emit_1trigger(4'b0001,0);		//一个过早的触发，理论上不应该响应
 
 
     #300000;
@@ -124,7 +124,8 @@ end
 //周期信号
 always @(posedge pulse_tic)
 begin
-	mem_data_output(4000);
+	mem_data_output(2000);
+	// serial_data_output(2000);
 end
 //周期触发
 always @(posedge pulse_tic)
@@ -186,6 +187,21 @@ task emit_1trigger;
 	    repeat (Pre_trigger_clks) @ (posedge clk_i);
 		#1 trigger_vector_i = trigger_vector;
         #5 trigger_vector_i = 0;
+    end
+endtask
+
+// 【TASK】将自然数顺序，赋给 x0_i 和 x0z_i，用于调试
+task serial_data_output;
+    input [31:0] tics;			// 读出数据的数量，不超过4000的一半
+    begin
+        loop_i = 0;
+        repeat (tics) @ (posedge clk_i)
+        begin
+            x0_i = loop_i+1;
+            x0z_i = loop_i+2;
+            loop_i = loop_i + 2;
+        end
+		loop_i = 0;
     end
 endtask
 endmodule
