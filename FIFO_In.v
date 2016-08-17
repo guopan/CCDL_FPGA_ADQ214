@@ -20,7 +20,7 @@
 //////////////////////////////////////////////////////////////////////////////////
 module FIFO_in
        #( parameter
-          TOTAL_POINT = 1000,	//单脉冲处理点数的一半（因为2个数据/时钟）
+          TOTAL_POINT = 1000,		//单脉冲处理点数的一半（因为2个数据/时钟）
           RANGEBIN_LENGTH = 250,	//每距离门处理点数
           NFFT = 1024				//补零后的FFT点数
         )
@@ -50,7 +50,7 @@ reg rd_en;
 reg [12:0] wr_counter;		//采样点计数器,FIFO写入点数控制
 // reg [12:0] debug_counter;
 reg [12:0] BinPoint_counter;	//距离门内采样点计数器，FIFO读出补零控制
-reg [2:0] state,next_state;
+reg [3:0]  state, next_state;
 
 wire [31:0] din;
 wire [15:0] dout;
@@ -61,7 +61,7 @@ reg  wr_en_d;
 //补零控制（FIFO读出）状态机，状态定义
 parameter  IDLE = 4'b0001,
            READOUT_FIFO = 4'b0010,
-           OUTPUT_ZERO = 4'b0100,
+           OUTPUT_ZERO  = 4'b0100,
            READ_FINISH  = 4'b1000;
 
 //赋值
