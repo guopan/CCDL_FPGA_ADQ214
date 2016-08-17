@@ -47,7 +47,7 @@ wire [15:0] ul_partnum_2_o;
 wire [15:0] ul_partnum_3_o;
 wire [15:0] ul_partnum_rev_o;
 
-// æ–‡ä»¶å¥æŸ„
+// ÎÄ¼ş¾ä±ú
 integer output_file;
 
 // Instantiate the Unit Under Test (UUT)
@@ -74,20 +74,20 @@ user_logic_signal_processing uut (
                              );
 
 integer loop_i;
-reg pulse_tic;		// è„‰å†²é‡å¤é—´éš”ä¿¡å·ï¼Œ10kHzï¼Œ100Î¼s
+reg pulse_tic;		// Âö³åÖØ¸´¼ä¸ôĞÅºÅ£¬10kHz£¬100¦Ìs
 
-//è¯»å–æ•°æ®
+//¶ÁÈ¡Êı¾İ
 reg signed [15:0] mem[3999:0];
 
-// ç”Ÿæˆè„‰å†²é‡å¤é—´éš”ä¿¡å·
+// Éú³ÉÂö³åÖØ¸´¼ä¸ôĞÅºÅ
 initial begin
 	pulse_tic = 0;
-	repeat(100) @ (posedge clk_i);	//åˆå§‹å»¶è¿Ÿ
+	repeat(100) @ (posedge clk_i);	//³õÊ¼ÑÓ³Ù
 	pulse_tic = 1;
 	forever # 50000 pulse_tic = ~ pulse_tic;
 end
 
-// ä¸»è¦æµ‹è¯•æ¿€åŠ±
+// Ö÷Òª²âÊÔ¼¤Àø
 initial begin
     // Initialize Inputs
     clk_i = 1;
@@ -108,7 +108,7 @@ initial begin
 	
     // Add stimulus here
     #150;
-    emit_1trigger(4'b0001,0);		//ä¸€ä¸ªè¿‡æ—©çš„è§¦å‘ï¼Œç†è®ºä¸Šä¸åº”è¯¥å“åº”
+    emit_1trigger(4'b0001,0);		//Ò»¸ö¹ıÔçµÄ´¥·¢£¬ÀíÂÛÉÏ²»Ó¦¸ÃÏìÓ¦
 
 
     #300000;
@@ -120,33 +120,33 @@ initial begin
 
 end
 
-//å‘¨æœŸæ€§æµ‹è¯•æ¿€åŠ±
-//å‘¨æœŸä¿¡å·
+//ÖÜÆÚĞÔ²âÊÔ¼¤Àø
+//ÖÜÆÚĞÅºÅ
 always @(posedge pulse_tic)
 begin
 	mem_data_output(2000);
 	// serial_data_output(2000);
 end
-//å‘¨æœŸè§¦å‘
+//ÖÜÆÚ´¥·¢
 always @(posedge pulse_tic)
 begin
 
 	emit_1trigger(4'b0100,69);
 end
 
-//å®šä¹‰æ—¶é’Ÿ
+//¶¨ÒåÊ±ÖÓ
 always #2.5 clk_i = ~clk_i;	//	200MHz
 
-//åœæ­¢ä»¿çœŸ
+//Í£Ö¹·ÂÕæ
 initial
 begin
-    #15000 ;//$stop;	//ç¬¬ä¸€ç»„1024ç‚¹FFTå®Œæˆ
-    #35000 ;//$stop;	//ç¬¬å…«ç»„1024ç‚¹FFTå®Œæˆ
+    #15000 ;//$stop;	//µÚÒ»×é1024µãFFTÍê³É
+    #35000 ;//$stop;	//µÚ°Ë×é1024µãFFTÍê³É
     $fclose(output_file);
     // $finish;
 end
 
-// æ–‡ä»¶æ‰“å¼€
+// ÎÄ¼ş´ò¿ª
 initial
 begin
     output_file = $fopen("..\\..\\source\\Matlab_verify\\FFT_SPEC_out.txt","w");
@@ -157,16 +157,16 @@ begin
     end
 end
 
-// å°†ç¬¬ä¸€ä¸ªè„‰å†²çš„åŠŸç‡è°±è®¡ç®—ç»“æœå†™å…¥æ–‡ä»¶
+// ½«µÚÒ»¸öÂö³åµÄ¹¦ÂÊÆ×¼ÆËã½á¹ûĞ´ÈëÎÄ¼ş
 always @(posedge clk_i)
 begin
     if(uut.Power_Spec_Cal_m.data_valid)
         $fwrite(output_file,"%d\t%d\n",uut.SPEC_Acc_m.data_index,uut.Power_Spec_Cal_m.Power_Spec);
 end
 
-// ã€TASKã€‘è¯»å‡ºmemä¸­çš„æ•°æ®ï¼Œèµ‹ç»™ x0_i å’Œ x0z_i
+// ¡¾TASK¡¿¶Á³ömemÖĞµÄÊı¾İ£¬¸³¸ø x0_i ºÍ x0z_i
 task mem_data_output;
-    input [31:0] tics;			// è¯»å‡ºæ•°æ®çš„æ•°é‡ï¼Œä¸è¶…è¿‡4000çš„ä¸€åŠ
+    input [31:0] tics;			// ¶Á³öÊı¾İµÄÊıÁ¿£¬²»³¬¹ı4000µÄÒ»°ë
     begin
         loop_i = 0;
         repeat (tics) @ (posedge clk_i)
@@ -179,10 +179,10 @@ task mem_data_output;
     end
 endtask
 
-// ã€TASKã€‘ç”Ÿæˆå•ä¸ªè§¦å‘å‘é‡
+// ¡¾TASK¡¿Éú³Éµ¥¸ö´¥·¢ÏòÁ¿
 task emit_1trigger;
-    input [3:0] trigger_vector;		// è§¦å‘å‘é‡
-	input [15:0] Pre_trigger_clks;		// è§¦å‘å»¶è¿Ÿæ—¶é’Ÿæ•°
+    input [3:0] trigger_vector;		// ´¥·¢ÏòÁ¿
+	input [15:0] Pre_trigger_clks;		// ´¥·¢ÑÓ³ÙÊ±ÖÓÊı
     begin
 	    repeat (Pre_trigger_clks) @ (posedge clk_i);
 		#1 trigger_vector_i = trigger_vector;
@@ -190,9 +190,9 @@ task emit_1trigger;
     end
 endtask
 
-// ã€TASKã€‘å°†è‡ªç„¶æ•°é¡ºåºï¼Œèµ‹ç»™ x0_i å’Œ x0z_iï¼Œç”¨äºè°ƒè¯•
+// ¡¾TASK¡¿½«×ÔÈ»ÊıË³Ğò£¬¸³¸ø x0_i ºÍ x0z_i£¬ÓÃÓÚµ÷ÊÔ
 task serial_data_output;
-    input [31:0] tics;			// è¯»å‡ºæ•°æ®çš„æ•°é‡ï¼Œä¸è¶…è¿‡4000çš„ä¸€åŠ
+    input [31:0] tics;			// ¶Á³öÊı¾İµÄÊıÁ¿£¬²»³¬¹ı4000µÄÒ»°ë
     begin
         loop_i = 0;
         repeat (tics) @ (posedge clk_i)

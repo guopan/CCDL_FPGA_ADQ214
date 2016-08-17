@@ -59,12 +59,12 @@ wire [15:0] fft_in_data;
 
 wire [9:0]  data_index;
 wire FFT_done;
-// åŠŸç‡è°±è®¡ç®—
+// ¹¦ÂÊÆ×¼ÆËã
 wire [31:0] Power_Spec;
 wire data_valid_PSC;
 wire [9:0] xn_index;
 wire [9:0] xk_index_reg1;
-// åŒå£RAM
+// Ë«¿ÚRAM
 wire [13:0] addra_dpram;
 reg  [31:0] dina_dpram;
 wire [13:0] addrb_dpram;
@@ -73,16 +73,16 @@ wire [31:0] doutb_dpram;
 reg  [31:0] dina_dpram_BG;
 wire [31:0] doutb_dpram_BG;
 
-// åŠŸç‡è°±ç´¯åŠ 
+// ¹¦ÂÊÆ×ÀÛ¼Ó
 wire SPEC_Acc_Ctrl;
 wire DPRAM_wea;
 wire DPRAM_BG_wea;
 wire SPEC_Acc_Done;
 
-// è·ç¦»é—¨è®¡æ•°å™¨
+// ¾àÀëÃÅ¼ÆÊıÆ÷
 wire [4:0] RangeBin_counts;
 
-// è„‰å†²è®¡æ•°å™¨
+// Âö³å¼ÆÊıÆ÷
 wire [15:0] Pulse_counts;
 
 wire Capture_En;
@@ -109,9 +109,9 @@ assign fft_in_data = data_out;
 
 assign user_register_o = {(16*NofUserRegistersOut){1'b0}};
 
-assign data_valid_o = data_valid_PSC;		// ä¸´æ—¶èµ‹å€¼ï¼Œå¾…ä¿®æ­£
+assign data_valid_o = data_valid_PSC;		// ÁÙÊ±¸³Öµ£¬´ıĞŞÕı
 
-// Trigger å‘é‡è§£ç æ¨¡å—ã€‚è¾“å‡ºè§¦å‘å¼€å§‹ä¿¡å·ã€‚
+// Trigger ÏòÁ¿½âÂëÄ£¿é¡£Êä³ö´¥·¢¿ªÊ¼ĞÅºÅ¡£
 Trigger_Decoder Trigger_Decoder_m (
                     .clk(clk_i),
                     .rst(rst_i),
@@ -120,8 +120,8 @@ Trigger_Decoder Trigger_Decoder_m (
                     .trigger_start(trigger_start)
                 );
 
-// FIFO_TC æ¨¡å—ã€‚å†™å…¥æ·±åº¦1024ï¼Œè¾“å…¥ä½å®½32bitï¼Œè¾“å‡ºä½å®½32bitï¼Œè¯»å†™æ—¶é’ŸåŒæ­¥ã€‚
-// è¯»å†™ä½¿èƒ½å»¶æ—¶69ä¸ªæ—¶é’Ÿã€‚
+// FIFO_TC Ä£¿é¡£Ğ´ÈëÉî¶È1024£¬ÊäÈëÎ»¿í32bit£¬Êä³öÎ»¿í32bit£¬¶ÁĞ´Ê±ÖÓÍ¬²½¡£
+// ¶ÁĞ´Ê¹ÄÜÑÓÊ±69¸öÊ±ÖÓ¡£
 FIFO_TC FIFO_TC_m (
             .clk(clk_i),
             .rst(rst_i),
@@ -131,8 +131,8 @@ FIFO_TC FIFO_TC_m (
             .trigger_tc_ready(trigger_ready)
         );
 
-// FIFO_IN æ¨¡å—ã€‚è¾“å…¥ä½å®½32bitï¼Œè¾“å‡ºä½å®½16bitï¼Œå†™å…¥æ·±åº¦4096ã€‚è¯»å†™æ—¶é’ŸåŒæ­¥ã€‚
-// è¯»æ•°250ä¸ªç‚¹åè¾“å‡ºè¡¥é›¶ã€‚
+// FIFO_IN Ä£¿é¡£ÊäÈëÎ»¿í32bit£¬Êä³öÎ»¿í16bit£¬Ğ´ÈëÉî¶È4096¡£¶ÁĞ´Ê±ÖÓÍ¬²½¡£
+// ¶ÁÊı250¸öµãºóÊä³ö²¹Áã¡£
 FIFO_in FIFO_in_m (
             .rst(rst_i),
             .clk(clk_i),
@@ -142,7 +142,7 @@ FIFO_in FIFO_in_m (
             .data_valid(fifo_in_valid)
         );
 
-// åŠŸç‡è°±è®¡ç®—æ¨¡å—ï¼Œè®¡ç®—1024ç‚¹FFTï¼ŒåŠå…¶åŠŸç‡è°±ã€‚
+// ¹¦ÂÊÆ×¼ÆËãÄ£¿é£¬¼ÆËã1024µãFFT£¬¼°Æä¹¦ÂÊÆ×¡£
 Power_Spec_Cal Power_Spec_Cal_m (
                    .clk(clk_i),
                    .rst(rst_i),
@@ -156,10 +156,10 @@ Power_Spec_Cal Power_Spec_Cal_m (
 				   .FFT_done(FFT_done)
                );
 
-// åŠŸç‡è°±å­˜å‚¨æ¨¡å—ï¼ŒåŒå£RAMï¼Œä½å®½32ï¼Œæ·±åº¦16*1024ã€‚
+// ¹¦ÂÊÆ×´æ´¢Ä£¿é£¬Ë«¿ÚRAM£¬Î»¿í32£¬Éî¶È16*1024¡£
 DPRAM_Buffer DPRAM_Buffer_m (
                  .clka(clk_i), 				// input clka
-                 .wea(DPRAM_wea), 			// input [0 : 0] wea, Port Açš„å†™å…è®¸ä¿¡å·
+                 .wea(DPRAM_wea), 			// input [0 : 0] wea, Port AµÄĞ´ÔÊĞíĞÅºÅ
                  .addra(addra_dpram), 		// input [13 : 0] addra
                  .dina(dina_dpram), 		// input [31 : 0] dina
                  .clkb(clk_i), 				// input clkb
@@ -167,7 +167,7 @@ DPRAM_Buffer DPRAM_Buffer_m (
                  .doutb(doutb_dpram) 		// output [31 : 0] doutb
              );
 			 
-// èƒŒæ™¯å™ªå£°åŠŸç‡è°±å­˜å‚¨æ¨¡å—ï¼ŒåŒå£RAMï¼Œä½å®½32ï¼Œæ·±åº¦1024ã€‚
+// ±³¾°ÔëÉù¹¦ÂÊÆ×´æ´¢Ä£¿é£¬Ë«¿ÚRAM£¬Î»¿í32£¬Éî¶È1024¡£
 DPRAM_Buffer_BG DPRAM_Buffer_BG_m (
   .clka(clk_i), 				// input clka
   .wea(DPRAM_BG_wea), 			// input [0 : 0] wea
@@ -180,7 +180,7 @@ DPRAM_Buffer_BG DPRAM_Buffer_BG_m (
 
 			 
 			 
-// åŠŸç‡è°±ç´¯åŠ æ§åˆ¶æ¨¡å—ï¼Œä»DPRAM_Bufferè¯»å‡ºç´¯åŠ å€¼ï¼Œä¸æ–°çš„åŠŸç‡è°±æ•°æ®ç´¯åŠ åï¼Œå†™å›åŸåœ°å€
+// ¹¦ÂÊÆ×ÀÛ¼Ó¿ØÖÆÄ£¿é£¬´ÓDPRAM_Buffer¶Á³öÀÛ¼ÓÖµ£¬ÓëĞÂµÄ¹¦ÂÊÆ×Êı¾İÀÛ¼Óºó£¬Ğ´»ØÔ­µØÖ·
 SPEC_Acc SPEC_Acc_m (
              .clk(clk_i),
              .rst(rst_i),
@@ -195,33 +195,33 @@ SPEC_Acc SPEC_Acc_m (
 			 .SPEC_Acc_Done(SPEC_Acc_Done)
          );
 
-// ç´¯åŠ è¿‡ç¨‹_DPRAM
+// ÀÛ¼Ó¹ı³Ì_DPRAM
 always @(posedge clk_i or posedge rst_i)
 begin
     if(rst_i == 1)
         dina_dpram <= 0;
     else if(SPEC_Acc_Ctrl == 1)
         // dina_dpram <= Power_Spec + doutb_dpram;
-        dina_dpram <= data_index + doutb_dpram;		//debug ç”¨
+        dina_dpram <= data_index + doutb_dpram;		//debug ÓÃ
     else
-        // dina_dpram <= Power_Spec;		//å¾…å®š
-        dina_dpram <= data_index;		//debug ç”¨
+        // dina_dpram <= Power_Spec;		//´ı¶¨
+        dina_dpram <= data_index;		//debug ÓÃ
 end
 
-// ç´¯åŠ è¿‡ç¨‹_DPRAM_BG
+// ÀÛ¼Ó¹ı³Ì_DPRAM_BG
 always @(posedge clk_i or posedge rst_i)
 begin
     if(rst_i == 1)
         dina_dpram_BG <= 0;
     else if(SPEC_Acc_Ctrl == 1)
         // dina_dpram_BG <= Power_Spec + doutb_dpram_BG;
-        dina_dpram_BG <= data_index + doutb_dpram_BG;		//debug ç”¨
+        dina_dpram_BG <= data_index + doutb_dpram_BG;		//debug ÓÃ
     else
-        // dina_dpram_BG <= Power_Spec;		//å¾…å®š
-        dina_dpram_BG <= data_index;		//debug ç”¨
+        // dina_dpram_BG <= Power_Spec;		//´ı¶¨
+        dina_dpram_BG <= data_index;		//debug ÓÃ
 end
 
-// è·ç¦»é—¨è®¡æ•°å™¨
+// ¾àÀëÃÅ¼ÆÊıÆ÷
 RangeBin_Counter RangeBin_Counter_m (
     .clk(clk_i), 
     .rst(rst_i), 
@@ -230,7 +230,7 @@ RangeBin_Counter RangeBin_Counter_m (
     .bin_counts(RangeBin_counts)
     );
 
-// æ•´ç»„æ•°æ®çš„æ—¶åºæ§åˆ¶
+// Õû×éÊı¾İµÄÊ±Ğò¿ØÖÆ
 Group_Ctrl Group_Ctrl_m (
     .clk(clk_i), 
     .rst(rst_i), 
@@ -239,7 +239,7 @@ Group_Ctrl Group_Ctrl_m (
     .SPEC_Acc_Ctrl(SPEC_Acc_Ctrl)
     );
 	
-// è„‰å†²è®¡æ•°å™¨
+// Âö³å¼ÆÊıÆ÷
 Pulse_Counter Pulse_Counter_m (
     .clk(clk_i), 
     .rst(rst_i), 

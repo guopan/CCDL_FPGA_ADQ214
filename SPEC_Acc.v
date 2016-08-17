@@ -23,20 +23,20 @@ module SPEC_Acc(
     input wire rst,
     // input [31:0] data_in,
 	input wire data_valid_in,
-    input wire [9:0] xk_index_reg1,			//æ¯”data_indexæ—©3ä¸ªæˆ–4ä¸ªæ—¶é’Ÿï¼Œç”¨äºç”Ÿæˆè¯»åœ°å€
+    input wire [9:0] xk_index_reg1,			//±Èdata_indexÔç3¸ö»ò4¸öÊ±ÖÓ£¬ÓÃÓÚÉú³É¶ÁµØÖ·
     input wire [9:0] data_index,
-	input wire [4:0] RangeBin_Counter,			// ä»1å¼€å§‹è®¡æ•°
+	input wire [4:0] RangeBin_Counter,			// ´Ó1¿ªÊ¼¼ÆÊı
 	
     output reg [13:0] wraddr_out,
     output reg [13:0] rdaddr_out,
 	output reg DPRAM_wea,
 	output reg DPRAM_BG_wea,
-	output reg SPEC_Acc_Done					// ç´¯åŠ ç»“æŸçš„æ ‡å¿—ä¿¡å·
+	output reg SPEC_Acc_Done					// ÀÛ¼Ó½áÊøµÄ±êÖ¾ĞÅºÅ
 	);
 
 reg working;
 
-// ç´¯åŠ è¿‡ç¨‹çš„è¿›è¡Œä¸­çš„æ ‡å¿—ä¿¡å·
+// ÀÛ¼Ó¹ı³ÌµÄ½øĞĞÖĞµÄ±êÖ¾ĞÅºÅ
 always @(posedge clk or posedge rst)
 begin
     if(rst == 1)
@@ -45,7 +45,7 @@ begin
         working <= data_valid_in;
 end
 
-// ç´¯åŠ ç»“æŸçš„æ ‡å¿—ä¿¡å·
+// ÀÛ¼Ó½áÊøµÄ±êÖ¾ĞÅºÅ
 always @(posedge clk or posedge rst)
 begin
     if(rst == 1)
@@ -56,7 +56,7 @@ begin
         SPEC_Acc_Done <= 0;
 end
 
-// ç”ŸæˆDPRAMè¯»åœ°å€
+// Éú³ÉDPRAM¶ÁµØÖ·
 always @(posedge clk or posedge rst)
 begin
     if(rst == 1)
@@ -65,7 +65,7 @@ begin
         rdaddr_out <= {RangeBin_Counter, xk_index_reg1};
 end
 
-// ç”ŸæˆDPRAMå†™åœ°å€
+// Éú³ÉDPRAMĞ´µØÖ·
 always @(posedge clk or posedge rst)
 begin
     if(rst == 1)
@@ -74,8 +74,8 @@ begin
         wraddr_out <= {RangeBin_Counter-1, data_index};
 end
 
-// èƒŒæ™¯å™ªå£°DPRAM_BGçš„ä½¿èƒ½ä¿¡å·ï¼Œä»…åœ¨ç¬¬ä¸€ä¸ªè·ç¦»é—¨ä½¿èƒ½
-// ä»£ç æœªå®Œæˆ
+// ±³¾°ÔëÉùDPRAM_BGµÄÊ¹ÄÜĞÅºÅ£¬½öÔÚµÚÒ»¸ö¾àÀëÃÅÊ¹ÄÜ
+// ´úÂëÎ´Íê³É
 always @(posedge clk or posedge rst)
 begin
     if(rst == 1)
@@ -84,8 +84,8 @@ begin
         DPRAM_BG_wea <= data_valid_in && (RangeBin_Counter < 2);
 end
 
-// ç´¯åŠ è¿‡ç¨‹çš„ä½¿èƒ½æ§åˆ¶ä¿¡å·
-// ä»£ç æœªå®Œæˆ
+// ÀÛ¼Ó¹ı³ÌµÄÊ¹ÄÜ¿ØÖÆĞÅºÅ
+// ´úÂëÎ´Íê³É
 always @(posedge clk or posedge rst)
 begin
     if(rst == 1)

@@ -26,7 +26,7 @@ module Pulse_Counter(
     output reg [15:0] Pulse_counts
     );
 	
-//è·ç¦»é—¨è®¡æ•°å™¨
+//¾àÀëÃÅ¼ÆÊıÆ÷
 always @(posedge clk or posedge rst)
 begin
     if(rst == 1)

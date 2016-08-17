@@ -20,7 +20,7 @@
 //////////////////////////////////////////////////////////////////////////////////
 module FIFO_TC
        #(parameter
-         DELAY_NUM = 69+4)		// +4 æ˜¯ä¸ºäº†åŒ¹é… FIFO_in çš„è¯»å‡ºå»¶è¿Ÿ
+         DELAY_NUM = 69+4)		// +4 ÊÇÎªÁËÆ¥Åä FIFO_in µÄ¶Á³öÑÓ³Ù
        (
            input wire clk,
            input wire rst,
@@ -38,11 +38,11 @@ reg   [12:0] din_counter;
 wire full;
 wire empty;
 
-// èµ‹å€¼
+// ¸³Öµ
 assign wr_en = ~rst;
 assign data_in = {x0_i,x0z_i};
 
-// è®¡æ•°å™¨
+// ¼ÆÊıÆ÷
 always @(posedge clk or posedge rst)
 begin
     if(rst == 1)
@@ -53,7 +53,7 @@ begin
         din_counter <= din_counter;
 end
 
-// è¯»ä¿¡å·å»¶è¿Ÿæ§åˆ¶
+// ¶ÁĞÅºÅÑÓ³Ù¿ØÖÆ
 always @(posedge clk or posedge rst)
 begin
     if(rst == 1)
@@ -64,7 +64,7 @@ begin
         rd_en <= 1;
 end
 
-//FIFOç¼“å­˜ç»“æŸï¼Œå‘å‡ºè§¦å‘å…è®¸ä¿¡å·
+//FIFO»º´æ½áÊø£¬·¢³ö´¥·¢ÔÊĞíĞÅºÅ
 always @(posedge clk or posedge rst)
 begin
     if(rst == 1)
@@ -73,7 +73,7 @@ begin
         trigger_tc_ready <= rd_en;
 end
 
-//FIFO IP å†™å…¥æ·±åº¦1024ï¼Œè¾“å…¥ä½å®½32bitï¼Œè¾“å‡ºä½å®½32bitï¼Œè¯»å†™æ—¶é’ŸåŒæ­¥
+//FIFO IP Ğ´ÈëÉî¶È1024£¬ÊäÈëÎ»¿í32bit£¬Êä³öÎ»¿í32bit£¬¶ÁĞ´Ê±ÖÓÍ¬²½
 Fifo_Buffer_Tc Fifo_Buffer_Tc_m (
                    .clk(clk), // input clk
                    .rst(rst), // input rst

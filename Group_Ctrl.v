@@ -27,7 +27,7 @@ module Group_Ctrl(
     );
 	
 	
-// 是否累加DPRAM原有数据，高：累加，低：不累加（第一个脉冲）
+// �Ƿ��ۼ�DPRAMԭ�����ݣ��ߣ��ۼӣ��ͣ����ۼӣ���һ�����壩
 always @(posedge clk or posedge rst)
 begin
     if(rst == 1)
@@ -36,8 +36,8 @@ begin
         SPEC_Acc_Ctrl <= Pulse_counts > 1;
 end
 
-// 采集过程的使能信号，接收上位机指令置高，采集完成置低
-// 代码未完成
+// �ɼ����̵�ʹ���źţ�������λ��ָ���øߣ��ɼ�����õ�
+// ����δ���
 always @(posedge clk or posedge rst)
 begin
     if(rst == 1)
