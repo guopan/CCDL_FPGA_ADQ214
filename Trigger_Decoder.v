@@ -21,18 +21,18 @@
 module Trigger_Decoder(
            input wire clk,
            input wire rst,
+           input wire Capture_En,
            input wire trigger_ready,
            input wire [3:0] trigger_vector,
            output reg trigger_start
        );
 
-
-//输出触发信号
+//根据触发向量，输出触发信号
 always @(posedge clk or posedge rst)
 begin
     if(rst == 1)
         trigger_start <= 0;
-    else if(trigger_ready == 1)
+    else if(trigger_ready == 1 && capture_en == 1)
         trigger_start <= |trigger_vector;
     else
         trigger_start <= 0;

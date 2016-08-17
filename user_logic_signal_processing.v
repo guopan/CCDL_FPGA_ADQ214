@@ -115,6 +115,7 @@ assign data_valid_o = data_valid_PSC;		// 临时赋值，待修正
 Trigger_Decoder Trigger_Decoder_m (
                     .clk(clk_i),
                     .rst(rst_i),
+                    .Capture_En(Capture_En),
                     .trigger_ready(trigger_ready),
                     .trigger_vector(trigger_vector_i),
                     .trigger_start(trigger_start)
@@ -177,8 +178,6 @@ DPRAM_Buffer_BG DPRAM_Buffer_BG_m (
   .addrb(addrb_dpram[9:0]), 	// input [9 : 0] addrb
   .doutb(doutb_dpram_BG) 		// output [31 : 0] doutb
 );
-
-			 
 			 
 // 功率谱累加控制模块，从DPRAM_Buffer读出累加值，与新的功率谱数据累加后，写回原地址
 SPEC_Acc SPEC_Acc_m (
