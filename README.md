@@ -38,6 +38,7 @@ ISE 14.7 （会影响其中的IP core 生成的版本）
 在低版本的ISE中，Regenerate Al IPl cores可能会不成功。
 
 # 其他说明
-- 部分含有中文注释的verilog HDL源代码文件已转为UTF-8编码
+- 部分含有中文注释的verilog HDL源代码文件先已转为UTF-8编码，但考虑到综合工具xst可能对UTF-8支持不够好，又改回了Ansi编码。
+- 这样很多Git的图形界面工具会出现乱码，但是Git原生的Git GUI还是没有问题的。
 
-为了在Git工具中不出现乱码，可以参考[Git工具相关设置](https://gist.github.com/guopan/a9baacef238fa18d2b1fc3abe60e111d/#file-git工具相关设置-md)进行配置。
+在UTF-8编码时，为了在Git工具中不出现乱码，可以参考[Git工具相关设置](https://gist.github.com/guopan/a9baacef238fa18d2b1fc3abe60e111d/#file-git工具相关设置-md)进行配置。
