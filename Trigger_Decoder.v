@@ -32,7 +32,7 @@ always @(posedge clk or posedge rst)
 begin
     if(rst == 1)
         trigger_start <= 0;
-    else if(trigger_ready == 1 && capture_en == 1)
+    else if(trigger_ready == 1 && Capture_En == 1)
         trigger_start <= |trigger_vector;
     else
         trigger_start <= 0;
