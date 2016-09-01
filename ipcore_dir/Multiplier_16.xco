@@ -1,7 +1,7 @@
 ##############################################################
 #
-# Xilinx Core Generator version 14.7
-# Date: Wed Aug 03 06:08:00 2016
+# Xilinx Core Generator version 14.3
+# Date: Fri Aug 19 09:07:51 2016
 #
 ##############################################################
 #
@@ -62,7 +62,7 @@ CSET userounding=false
 CSET zerodetect=false
 # END Parameters
 # BEGIN Extra information
-MISC pkg_timestamp=2013-07-22T11:36:26Z
+MISC pkg_timestamp=2012-08-28T14:51:52Z
 # END Extra information
 GENERATE
-# CRC: 6b19a142
+# CRC: b0251779

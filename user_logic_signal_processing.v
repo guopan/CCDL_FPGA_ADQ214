@@ -87,6 +87,14 @@ wire [15:0] Pulse_counts;
 
 wire Capture_En;
 
+// 背景噪声扣除
+wire Post_Process_Ctrl;
+wire Post_Process_Done;
+
+//峰值探测
+wire Peak_Detection_Ctrl;
+wire[31:0] Peak_Value;
+wire [9:0]  Peak_Addr;
 // -----------------------------------------------------------------------------------------------
 // This section sets the user logic part number, which can be set in the user logic build script
 // using set_userlogicpartnumber and read out through the API using GetAlgUserLogicPartNumber().
@@ -184,6 +192,7 @@ SPEC_Acc SPEC_Acc_m (
              .clk(clk_i),
              .rst(rst_i),
              .data_valid_in(data_valid_PSC),
+				 .Post_Process_Ctrl(Post_Process_Ctrl),
              .xk_index_reg1(xk_index_reg1),
              .data_index(data_index),
              .RangeBin_Counter(RangeBin_counts),
@@ -194,6 +203,30 @@ SPEC_Acc SPEC_Acc_m (
 			 .SPEC_Acc_Done(SPEC_Acc_Done)
          );
 
+// 背景噪声扣除模块
+Post_Process_m Post_Process_m (
+    .clk(clk_i), 
+    .rst(rst_i), 
+    .Post_Process_Ctrl(Post_Process_Ctrl), 
+    .data_valid_in(data_valid_PSC), 
+    .Post_Process_Done(Post_Process_Done), 
+    .PP_working(PP_working)
+    );
+	 
+// 峰值检测
+
+Peak_Detection Peak_Detection_m (
+    .clk(clk_i), 
+    .rst(rst_i), 
+    .Peak_Detection_Ctrl(Peak_Detection_Ctrl), 
+    .data_valid_in(data_valid_PSC), 
+    .RangBin_counts(RangeBin_counts), 
+    .D_out(doutb_dpram), 
+    .D_addr(addrb_dpram), 
+    .Peak_Value(Peak_Value), 
+    .Peak_Addr(Peak_Addr)
+    );
+	 
 // 累加过程_DPRAM
 always @(posedge clk_i or posedge rst_i)
 begin
@@ -201,10 +234,14 @@ begin
         dina_dpram <= 0;
     else if(SPEC_Acc_Ctrl == 1)
         // dina_dpram <= Power_Spec + doutb_dpram;
-        dina_dpram <= data_index + doutb_dpram;		//debug 用
-    else
+        dina_dpram <= data_index + doutb_dpram;		//debug 用 
+    else if(Post_Process_Ctrl == 1)
+        dina_dpram <= doutb_dpram - doutb_dpram_BG;//扣除背景噪声	 
+    else if(Peak_Detection_Ctrl == 1)
+	     dina_dpram <= doutb_dpram;
+	 else
         // dina_dpram <= Power_Spec;		//待定
-        dina_dpram <= data_index;		//debug 用
+        dina_dpram <= Power_Spec;		//debug 用
 end
 
 // 累加过程_DPRAM_BG
@@ -214,11 +251,15 @@ begin
         dina_dpram_BG <= 0;
     else if(SPEC_Acc_Ctrl == 1)
         // dina_dpram_BG <= Power_Spec + doutb_dpram_BG;
-        dina_dpram_BG <= data_index + doutb_dpram_BG;		//debug 用
-    else
+        dina_dpram_BG <= data_index + doutb_dpram_BG;		//debug 	 
+    else if(Post_Process_Ctrl == 1)
+	     dina_dpram_BG <= doutb_dpram_BG;//取出背景噪声
+	 else
         // dina_dpram_BG <= Power_Spec;		//待定
-        dina_dpram_BG <= data_index;		//debug 用
+        dina_dpram_BG <= Power_Spec;		//debug 用
 end
+
+			
 
 // 距离门计数器
 RangeBin_Counter RangeBin_Counter_m (
@@ -235,7 +276,9 @@ Group_Ctrl Group_Ctrl_m (
     .rst(rst_i), 
     .Pulse_counts(Pulse_counts), 
     .Capture_En(Capture_En), 
-    .SPEC_Acc_Ctrl(SPEC_Acc_Ctrl)
+    .SPEC_Acc_Ctrl(SPEC_Acc_Ctrl),
+	 .Post_Process_Ctrl(Post_Process_Ctrl),
+	 .Peak_Detection_Ctrl(Peak_Detection_Ctrl)
     );
 	
 // 脉冲计数器
@@ -246,6 +289,8 @@ Pulse_Counter Pulse_Counter_m (
     .Capture_En(Capture_En), 
     .Pulse_counts(Pulse_counts)
     );
+	
+	
 	
 endmodule
 

@@ -22,16 +22,17 @@ module SPEC_Acc(
     input wire clk,
     input wire rst,
     // input [31:0] data_in,
-	input wire data_valid_in,
+	 input wire data_valid_in,
     input wire [9:0] xk_index_reg1,			//比data_index早3个或4个时钟，用于生成读地址
     input wire [9:0] data_index,
-	input wire [4:0] RangeBin_Counter,			// 从1开始计数
-	
+	 input wire [4:0] RangeBin_Counter,			// 从1开始计数
+	 input wire Post_Process_Ctrl,
+	 
     output reg [13:0] wraddr_out,
     output reg [13:0] rdaddr_out,
-	output reg DPRAM_wea,
-	output reg DPRAM_BG_wea,
-	output reg SPEC_Acc_Done					// 累加结束的标志信号
+	 output reg DPRAM_wea,
+	 output reg DPRAM_BG_wea,
+	 output reg SPEC_Acc_Done					// 累加结束的标志信号
 	);
 
 reg working;
@@ -75,16 +76,20 @@ begin
 end
 
 // 背景噪声DPRAM_BG的使能信号，仅在第一个距离门使能
+// 背景噪声扣除控制信号为1时，DPRAM_BG使能一直有效
 // 代码未完成
 always @(posedge clk or posedge rst)
 begin
     if(rst == 1)
         DPRAM_BG_wea <= 0;
+	 else if(Post_Process_Ctrl == 1)
+        DPRAM_BG_wea <= 1;	 
     else
         DPRAM_BG_wea <= data_valid_in && (RangeBin_Counter < 2);
 end
 
 // 累加过程的使能控制信号
+// 背景扣除的使能控制信号
 // 代码未完成
 always @(posedge clk or posedge rst)
 begin

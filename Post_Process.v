@@ -28,7 +28,6 @@ module Post_Process_m(
     output reg PP_working	 
     );
 
-reg Post_Process_start1; // delay 1 clk 
 //背景噪声扣除进行中的标志信号
 always@(posedge clk or posedge rst)
 begin
@@ -50,7 +49,5 @@ begin
     else
         Post_Process_Done <= 0;
 end		  
-        	 
-//峰值比较
- 
+        	  
 endmodule
