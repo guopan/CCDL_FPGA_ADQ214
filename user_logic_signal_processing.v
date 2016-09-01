@@ -234,7 +234,7 @@ begin
         dina_dpram <= 0;
     else if(SPEC_Acc_Ctrl == 1)
         // dina_dpram <= Power_Spec + doutb_dpram;
-        dina_dpram <= data_index + doutb_dpram;		//debug ÓÃ 
+        dina_dpram <= Power_Spec + doutb_dpram;		//debug ÓÃ 
     else if(Post_Process_Ctrl == 1)
         dina_dpram <= doutb_dpram - doutb_dpram_BG;//¿Û³ý±³¾°ÔëÉù	 
     else if(Peak_Detection_Ctrl == 1)
@@ -251,7 +251,7 @@ begin
         dina_dpram_BG <= 0;
     else if(SPEC_Acc_Ctrl == 1)
         // dina_dpram_BG <= Power_Spec + doutb_dpram_BG;
-        dina_dpram_BG <= data_index + doutb_dpram_BG;		//debug 	 
+        dina_dpram_BG <= Power_Spec + doutb_dpram_BG;		//debug 	 
     else if(Post_Process_Ctrl == 1)
 	     dina_dpram_BG <= doutb_dpram_BG;//È¡³ö±³¾°ÔëÉù
 	 else
