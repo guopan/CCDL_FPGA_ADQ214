@@ -26,7 +26,9 @@ module SPEC_Acc(
     input wire [9:0] xk_index_reg1,			//比data_index早3个或4个时钟，用于生成读地址
     input wire [9:0] data_index,
 	 input wire [4:0] RangeBin_Counter,			// 从1开始计数
+	 input wire [9:0] RangeIn_counts,
 	 input wire Post_Process_Ctrl,
+	 input wire Peak_Detection_Ctrl,
 	 
     output reg [13:0] wraddr_out,
     output reg [13:0] rdaddr_out,
@@ -62,8 +64,10 @@ always @(posedge clk or posedge rst)
 begin
     if(rst == 1)
         rdaddr_out <= 0;
+    else if(Peak_Detection_Ctrl == 1)
+        rdaddr_out <={RangeBin_Counter-1, RangeIn_counts};	 
     else
-        rdaddr_out <= {RangeBin_Counter, xk_index_reg1};
+        rdaddr_out <= {RangeBin_Counter-1, xk_index_reg1};
 end
 
 // 生成DPRAM写地址
