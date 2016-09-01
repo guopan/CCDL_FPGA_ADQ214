@@ -28,13 +28,14 @@ module Peak_Detection(
 	 input wire [13:0] D_addr,
 	 
 	 output reg [31:0] Peak_Value,
-	 output reg [9:0] Peak_Addr
+	 output reg [9:0] Peak_Addr,
+	 output reg [9:0] RangeIn_counts
     );
 reg PD_working;
 reg data_valid;
 reg [31:0] P_MAX;
 reg [13:0] P_addr;
-reg [9:0] RangeIn_counts;
+
 
 //峰值探测进行中的标志信号
 always @(posedge clk or posedge rst)

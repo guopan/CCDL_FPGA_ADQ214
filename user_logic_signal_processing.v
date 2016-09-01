@@ -94,7 +94,8 @@ wire Post_Process_Done;
 //峰值探测
 wire Peak_Detection_Ctrl;
 wire[31:0] Peak_Value;
-wire [9:0]  Peak_Addr;
+wire [9:0] Peak_Addr;
+wire [9:0] RangeIn_counts;
 // -----------------------------------------------------------------------------------------------
 // This section sets the user logic part number, which can be set in the user logic build script
 // using set_userlogicpartnumber and read out through the API using GetAlgUserLogicPartNumber().
@@ -193,6 +194,8 @@ SPEC_Acc SPEC_Acc_m (
              .rst(rst_i),
              .data_valid_in(data_valid_PSC),
 				 .Post_Process_Ctrl(Post_Process_Ctrl),
+				 .Peak_Detection_Ctrl(Peak_Detection_Ctrl),
+				 .RangeIn_counts(RangeIn_counts),
              .xk_index_reg1(xk_index_reg1),
              .data_index(data_index),
              .RangeBin_Counter(RangeBin_counts),
@@ -224,7 +227,8 @@ Peak_Detection Peak_Detection_m (
     .D_out(doutb_dpram), 
     .D_addr(addrb_dpram), 
     .Peak_Value(Peak_Value), 
-    .Peak_Addr(Peak_Addr)
+    .Peak_Addr(Peak_Addr),
+	 .RangeIn_counts(RangeIn_counts)
     );
 	 
 // 累加过程_DPRAM
