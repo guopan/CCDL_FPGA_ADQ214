@@ -63,9 +63,7 @@ end
 always @(posedge clk or posedge rst)
 begin
     if(rst == 1)
-        rdaddr_out <= 0;
-    else if(Peak_Detection_Ctrl == 1)
-        rdaddr_out <={RangeBin_Counter-1, RangeIn_counts};	 
+        rdaddr_out <= 0; 
     else
         rdaddr_out <= {RangeBin_Counter-1, xk_index_reg1};
 end

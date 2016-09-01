@@ -69,7 +69,7 @@ always @(posedge clk or posedge rst)
 begin
     if(rst == 1)
 	     P_MAX <= 0;
-	 else if(PD_working == 0 || RangeIn_counts < 512)
+	 else if(PD_working == 0 || D_addr[9:0] < 512)
         P_MAX <= 0;
     else if(P_MAX < D_out)
         P_MAX <= D_out;
@@ -82,7 +82,7 @@ always @(posedge clk or posedge rst)
 begin
     if(rst == 1)
 	     P_addr <= 0;
-	 else if(PD_working == 0 || RangeIn_counts < 512)
+	 else if(PD_working == 0 || D_addr[9:0] < 512)
         P_addr <= 0;
     else if(P_MAX < D_out)
         P_addr <= D_addr;
