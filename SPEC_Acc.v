@@ -65,7 +65,7 @@ begin
     if(rst == 1)
         rdaddr_out <= 0; 
     else
-        rdaddr_out <= {RangeBin_Counter-1, xk_index_reg1};
+        rdaddr_out <= {RangeBin_Counter, xk_index_reg1};
 end
 
 // Éú³ÉDPRAMĞ´µØÖ·

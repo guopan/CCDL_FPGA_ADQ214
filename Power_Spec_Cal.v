@@ -32,6 +32,7 @@ module Power_Spec_Cal(
            output reg [31:0] Power_Spec,		//功率谱计算结果
            output wire [9:0] xn_index,			//输入数据的索引值，为啥要输出？
            output reg [9:0] xk_index_reg1,		//输出用于DPRAM的读地址
+			  output reg [9:0] xk_index_reg3,   //输出用于峰值比较地址
            output reg [9:0] data_index,
            output reg data_valid,
 		   output wire FFT_done				//输出，用于RangeBin计数
@@ -53,7 +54,7 @@ wire [31:0] im_square;
 //Other
 reg dv_reg1, dv_reg2, dv_reg3;
 wire [9:0] xk_index;
-reg [9:0] xk_index_reg2, xk_index_reg3;
+reg [9:0] xk_index_reg2;
 // 赋值
 assign fft_rst = rst;
 assign scl_ch = 10'b01_1010_1011;
