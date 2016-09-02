@@ -163,7 +163,6 @@ Power_Spec_Cal Power_Spec_Cal_m (
                    .Power_Spec(Power_Spec),
                    .xn_index(xn_index),
                    .xk_index_reg1(xk_index_reg1),
-						 .xk_index_reg3(xk_index_reg3),
                    .data_index(data_index),
                    .data_valid(data_valid_PSC),
 				   .FFT_done(FFT_done)
@@ -228,7 +227,7 @@ Peak_Detection Peak_Detection_m (
     .data_valid_in(data_valid_PSC), 
     .RangBin_counts(RangeBin_counts), 
     .D_out(doutb_dpram), 
-    .D_addr(xk_index_reg3), 
+    .D_addr(data_index), 
     .Peak_Value(Peak_Value), 
     .Peak_Addr(Peak_Addr),
 	 .RangeIn_counts(RangeIn_counts)
