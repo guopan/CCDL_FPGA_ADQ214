@@ -25,7 +25,8 @@ module SPEC_Acc(
 	 input wire data_valid_in,
     input wire [9:0] xk_index_reg1,			//比data_index早3个或4个时钟，用于生成读地址
     input wire [9:0] data_index,
-	 input wire [4:0] RangeBin_Counter,			// 从1开始计数
+	 input wire [4:0] RangeBin_Counter,	 // 从1开始计数
+	 input wire [4:0] RangeBin_Counter_reg,//比RangeBin_Counter早2个时钟，用于与读地址匹配
 	 input wire [9:0] RangeIn_counts,
 	 input wire Post_Process_Ctrl,
 	 input wire Peak_Detection_Ctrl,
@@ -53,7 +54,7 @@ always @(posedge clk or posedge rst)
 begin
     if(rst == 1)
         SPEC_Acc_Done <= 0;
-    else if(working==1 && data_valid_in==0)
+    else if(working == 1 && data_valid_in == 0)
         SPEC_Acc_Done <= 1;
 	else
         SPEC_Acc_Done <= 0;
@@ -64,8 +65,10 @@ always @(posedge clk or posedge rst)
 begin
     if(rst == 1)
         rdaddr_out <= 0; 
-    else
-        rdaddr_out <= {RangeBin_Counter, xk_index_reg1};
+    else if(RangeBin_Counter_reg < 2)
+	     rdaddr_out <= xk_index_reg1;
+	 else	  
+        rdaddr_out <= {RangeBin_Counter_reg-2, xk_index_reg1};
 end
 
 // 生成DPRAM写地址
@@ -73,8 +76,10 @@ always @(posedge clk or posedge rst)
 begin
     if(rst == 1)
         wraddr_out <= 0;
-    else
-        wraddr_out <= {RangeBin_Counter-1, data_index};
+    else if(RangeBin_Counter < 2)
+	     wraddr_out <= data_index;
+	 else	  
+        wraddr_out <= {RangeBin_Counter-2, data_index};
 end
 
 // 背景噪声DPRAM_BG的使能信号，仅在第一个距离门使能

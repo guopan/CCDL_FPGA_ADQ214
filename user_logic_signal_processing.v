@@ -83,6 +83,7 @@ wire SPEC_Acc_Done;
 
 // 距离门计数器
 wire [4:0] RangeBin_counts;
+wire [4:0] RangeBin_counts_reg;
 
 // 脉冲计数器
 wire [15:0] Pulse_counts;
@@ -201,6 +202,7 @@ SPEC_Acc SPEC_Acc_m (
              .xk_index_reg1(xk_index_reg1),
              .data_index(data_index),
              .RangeBin_Counter(RangeBin_counts),
+				 .RangeBin_Counter_reg(RangeBin_counts_reg),
              .wraddr_out(addra_dpram),
              .rdaddr_out(addrb_dpram),
              .DPRAM_wea(DPRAM_wea),
@@ -273,7 +275,8 @@ RangeBin_Counter RangeBin_Counter_m (
     .rst(rst_i), 
     .cal_done(FFT_done), 
 	.SPEC_Acc_Done(SPEC_Acc_Done),
-    .bin_counts(RangeBin_counts)
+    .bin_counts(RangeBin_counts),
+	 .bin_counts_rd(RangeBin_counts_reg)
     );
 
 // 整组数据的时序控制
