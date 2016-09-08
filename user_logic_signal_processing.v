@@ -30,7 +30,7 @@ module user_logic_signal_processing
            output wire signed [NofBits-1:0]           y1_o,
            output wire signed [NofBits-1:0]           y1z_o,
            output wire [3:0]                          trigger_vector_o,
-           output wire 							   data_valid_o,
+           output wire                                data_valid_o,
 
            //User registers
            input wire [16*8-1:0]                      user_register_i,
@@ -121,7 +121,7 @@ assign fft_in_data = data_out;
 
 assign user_register_o = {(16*NofUserRegistersOut){1'b0}};
 
-assign data_valid_o = data_valid_PSC;		// 临时赋值，待修正
+assign data_valid_o = data_valid_PSC;       // 临时赋值，待修正
 
 // Trigger 向量解码模块。输出触发开始信号。
 Trigger_Decoder Trigger_Decoder_m (
@@ -166,75 +166,75 @@ Power_Spec_Cal Power_Spec_Cal_m (
                    .xk_index_reg1(xk_index_reg1),
                    .data_index(data_index),
                    .data_valid(data_valid_PSC),
-				   .FFT_done(FFT_done)
+                   .FFT_done(FFT_done)
                );
 
 // 功率谱存储模块，双口RAM，位宽32，深度16*1024。
 DPRAM_Buffer DPRAM_Buffer_m (
-                 .clka(clk_i), 				// input clka
-                 .wea(DPRAM_wea), 			// input [0 : 0] wea, Port A的写允许信号
-                 .addra(addra_dpram), 		// input [13 : 0] addra
-                 .dina(dina_dpram), 		// input [31 : 0] dina
-                 .clkb(clk_i), 				// input clkb
-                 .addrb(addrb_dpram), 		// input [13 : 0] addrb
-                 .doutb(doutb_dpram) 		// output [31 : 0] doutb
+                 .clka(clk_i),              // input clka
+                 .wea(DPRAM_wea),           // input [0 : 0] wea, Port A的写允许信号
+                 .addra(addra_dpram),       // input [13 : 0] addra
+                 .dina(dina_dpram),         // input [31 : 0] dina
+                 .clkb(clk_i),              // input clkb
+                 .addrb(addrb_dpram),       // input [13 : 0] addrb
+                 .doutb(doutb_dpram)        // output [31 : 0] doutb
              );
-			 
+
 // 背景噪声功率谱存储模块，双口RAM，位宽32，深度1024。
 DPRAM_Buffer_BG DPRAM_Buffer_BG_m (
-  .clka(clk_i), 				// input clka
-  .wea(DPRAM_BG_wea), 			// input [0 : 0] wea
-  .addra(addra_dpram[9:0]), 	// input [9 : 0] addra
-  .dina(dina_dpram_BG), 		// input [31 : 0] dina
-  .clkb(clk_i), 				// input clkb
-  .addrb(addrb_dpram[9:0]), 	// input [9 : 0] addrb
-  .doutb(doutb_dpram_BG) 		// output [31 : 0] doutb
-);
-			 
+                    .clka(clk_i),                 // input clka
+                    .wea(DPRAM_BG_wea),           // input [0 : 0] wea
+                    .addra(addra_dpram[9:0]),     // input [9 : 0] addra
+                    .dina(dina_dpram_BG),         // input [31 : 0] dina
+                    .clkb(clk_i),                 // input clkb
+                    .addrb(addrb_dpram[9:0]),     // input [9 : 0] addrb
+                    .doutb(doutb_dpram_BG)        // output [31 : 0] doutb
+                );
+
 // 功率谱累加控制模块，从DPRAM_Buffer读出累加值，与新的功率谱数据累加后，写回原地址
 SPEC_Acc SPEC_Acc_m (
              .clk(clk_i),
              .rst(rst_i),
              .data_valid_in(data_valid_PSC),
-				 .Post_Process_Ctrl(Post_Process_Ctrl),
-				 .Peak_Detection_Ctrl(Peak_Detection_Ctrl),
-				 .RangeIn_counts(RangeIn_counts),
+             .Post_Process_Ctrl(Post_Process_Ctrl),
+             .Peak_Detection_Ctrl(Peak_Detection_Ctrl),
+             .RangeIn_counts(RangeIn_counts),
              .xk_index_reg1(xk_index_reg1),
              .data_index(data_index),
              .RangeBin_Counter(RangeBin_counts),
-				 .RangeBin_Counter_reg(RangeBin_counts_reg),
+             .RangeBin_Counter_reg(RangeBin_counts_reg),
              .wraddr_out(addra_dpram),
              .rdaddr_out(addrb_dpram),
              .DPRAM_wea(DPRAM_wea),
              .DPRAM_BG_wea(DPRAM_BG_wea),
-			 .SPEC_Acc_Done(SPEC_Acc_Done)
+             .SPEC_Acc_Done(SPEC_Acc_Done)
          );
 
 // 背景噪声扣除模块
 Post_Process_m Post_Process_m (
-    .clk(clk_i), 
-    .rst(rst_i), 
-    .Post_Process_Ctrl(Post_Process_Ctrl), 
-    .data_valid_in(data_valid_PSC), 
-    .Post_Process_Done(Post_Process_Done), 
-    .PP_working(PP_working)
-    );
-	 
+                   .clk(clk_i),
+                   .rst(rst_i),
+                   .Post_Process_Ctrl(Post_Process_Ctrl),
+                   .data_valid_in(data_valid_PSC),
+                   .Post_Process_Done(Post_Process_Done),
+                   .PP_working(PP_working)
+               );
+
 // 峰值检测
 
 Peak_Detection Peak_Detection_m (
-    .clk(clk_i), 
-    .rst(rst_i), 
-    .Peak_Detection_Ctrl(Peak_Detection_Ctrl), 
-    .data_valid_in(data_valid_PSC), 
-    .RangBin_counts(RangeBin_counts), 
-    .D_out(doutb_dpram), 
-    .D_addr(data_index), 
-    .Peak_Value(Peak_Value), 
-    .Peak_Addr(Peak_Addr),
-	 .RangeIn_counts(RangeIn_counts)
-    );
-	 
+                   .clk(clk_i),
+                   .rst(rst_i),
+                   .Peak_Detection_Ctrl(Peak_Detection_Ctrl),
+                   .data_valid_in(data_valid_PSC),
+                   .RangBin_counts(RangeBin_counts),
+                   .D_out(doutb_dpram),
+                   .D_addr(data_index),
+                   .Peak_Value(Peak_Value),
+                   .Peak_Addr(Peak_Addr),
+                   .RangeIn_counts(RangeIn_counts)
+               );
+
 // 累加过程_DPRAM
 always @(posedge clk_i or posedge rst_i)
 begin
@@ -242,14 +242,14 @@ begin
         dina_dpram <= 0;
     else if(SPEC_Acc_Ctrl == 1)
         // dina_dpram <= Power_Spec + doutb_dpram;
-        dina_dpram <= Power_Spec + doutb_dpram;		//debug 用 
+        dina_dpram <= Power_Spec + doutb_dpram;     //debug 用
     else if(Post_Process_Ctrl == 1)
-        dina_dpram <= doutb_dpram - doutb_dpram_BG;//扣除背景噪声	 
+        dina_dpram <= doutb_dpram - doutb_dpram_BG;//扣除背景噪声
     else if(Peak_Detection_Ctrl == 1)
-	     dina_dpram <= doutb_dpram;
-	 else
-        // dina_dpram <= Power_Spec;		//待定
-        dina_dpram <= Power_Spec;		//debug 用
+        dina_dpram <= doutb_dpram;
+    else
+        // dina_dpram <= Power_Spec;        //待定
+        dina_dpram <= Power_Spec;       //debug 用
 end
 
 // 累加过程_DPRAM_BG
@@ -259,48 +259,48 @@ begin
         dina_dpram_BG <= 0;
     else if(SPEC_Acc_Ctrl == 1)
         // dina_dpram_BG <= Power_Spec + doutb_dpram_BG;
-        dina_dpram_BG <= Power_Spec + doutb_dpram_BG;		//debug 	 
+        dina_dpram_BG <= Power_Spec + doutb_dpram_BG;       //debug
     else if(Post_Process_Ctrl == 1)
-	     dina_dpram_BG <= doutb_dpram_BG;//取出背景噪声
-	 else
-        // dina_dpram_BG <= Power_Spec;		//待定
-        dina_dpram_BG <= Power_Spec;		//debug 用
+        dina_dpram_BG <= doutb_dpram_BG;//取出背景噪声
+    else
+        // dina_dpram_BG <= Power_Spec;     //待定
+        dina_dpram_BG <= Power_Spec;        //debug 用
 end
 
-			
+
 
 // 距离门计数器
 RangeBin_Counter RangeBin_Counter_m (
-    .clk(clk_i), 
-    .rst(rst_i), 
-    .cal_done(FFT_done), 
-	.SPEC_Acc_Done(SPEC_Acc_Done),
-    .bin_counts(RangeBin_counts),
-	 .bin_counts_rd(RangeBin_counts_reg)
-    );
+                     .clk(clk_i),
+                     .rst(rst_i),
+                     .cal_done(FFT_done),
+                     .SPEC_Acc_Done(SPEC_Acc_Done),
+                     .bin_counts(RangeBin_counts),
+                     .bin_counts_rd(RangeBin_counts_reg)
+                 );
 
 // 整组数据的时序控制
 Group_Ctrl Group_Ctrl_m (
-    .clk(clk_i), 
-    .rst(rst_i), 
-    .Pulse_counts(Pulse_counts), 
-    .Capture_En(Capture_En), 
-    .SPEC_Acc_Ctrl(SPEC_Acc_Ctrl),
-	 .Post_Process_Ctrl(Post_Process_Ctrl),
-	 .Peak_Detection_Ctrl(Peak_Detection_Ctrl)
-    );
-	
+               .clk(clk_i),
+               .rst(rst_i),
+               .Pulse_counts(Pulse_counts),
+               .Capture_En(Capture_En),
+               .SPEC_Acc_Ctrl(SPEC_Acc_Ctrl),
+               .Post_Process_Ctrl(Post_Process_Ctrl),
+               .Peak_Detection_Ctrl(Peak_Detection_Ctrl)
+           );
+
 // 脉冲计数器
 Pulse_Counter Pulse_Counter_m (
-    .clk(clk_i), 
-    .rst(rst_i), 
-    .SPEC_Acc_Done(SPEC_Acc_Done), 
-    .Capture_En(Capture_En), 
-    .Pulse_counts(Pulse_counts)
-    );
-	
-	
-	
+                  .clk(clk_i),
+                  .rst(rst_i),
+                  .SPEC_Acc_Done(SPEC_Acc_Done),
+                  .Capture_En(Capture_En),
+                  .Pulse_counts(Pulse_counts)
+              );
+
+
+
 endmodule
 
 
