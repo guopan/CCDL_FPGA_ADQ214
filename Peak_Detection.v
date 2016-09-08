@@ -70,7 +70,7 @@ begin
 	 RangeIn_counts <= RangeIn_counts + 1;
 end
 	 
-// 清零
+// 对变换结果前半段数据清零
 always @(posedge clk or posedge rst)
 begin
     if(rst == 1)
