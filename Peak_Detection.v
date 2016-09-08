@@ -27,10 +27,11 @@ module Peak_Detection(
 	 input wire [31:0] D_out,
 	 input wire [9:0] D_addr,
 	 
-	 output reg [31:0] Peak_Value,
-	 output reg [9:0] Peak_Addr,
+	 output wire [31:0] Peak_Value,
+	 output wire [9:0] Peak_Addr,
 	 output reg [9:0] RangeIn_counts
     );
+
 reg PD_working;
 reg data_valid;
 reg [31:0] P_MAX;
@@ -38,7 +39,9 @@ reg [9:0] P_addr;
 reg [9:0] P_addr_reg;
 reg [31:0] P_value_valid;
 
-
+//赋值
+assign Peak_Value = data_valid?P_MAX:32'b0;
+assign Peak_Addr = data_valid?P_addr:10'b0;
 
 //峰值探测进行中的标志信号
 always @(posedge clk or posedge rst)
@@ -83,7 +86,9 @@ always @(posedge clk or posedge rst)
 begin
     if(rst == 1)
 	     P_MAX <= 0;
-	 else if(PD_working == 0)
+	 else if(PD_working == 0) 
+	     P_MAX <= 0;
+	 else if (RangeIn_counts == 1023)
         P_MAX <= 0;
     else if(P_MAX < P_value_valid)
         P_MAX <= P_value_valid;
@@ -97,14 +102,16 @@ begin
     if(rst == 1)
 	     P_addr <= 0;
 	 else if(PD_working == 0)
+	     P_addr <= 0;
+    else if(RangeIn_counts == 1023)
         P_addr <= 0;
     else if(P_MAX < P_value_valid)
-        P_addr <= D_addr;
+        P_addr <= P_addr_reg;
     else 
         P_addr <= P_addr;
 end		  
 
-// 地址信息延迟1clk
+// 地址信息延迟1clk,清零后输出匹配
 always @(posedge clk or posedge rst)
 begin
     if(rst == 1)
@@ -124,26 +131,6 @@ begin
         data_valid <= 0;
 end		  
      		  
-// 输出峰值结果
-always @(posedge clk or posedge rst)
-begin
-    if(rst == 0)
-	     Peak_Value <= 0;
-    else if(data_valid == 1)
-        Peak_Value <= P_MAX;
-	 else
-	     Peak_Value <= 0;
-end
 
-// 输出地址结果
-always @(posedge clk or posedge rst)
-begin
-    if(rst == 0)
-	     Peak_Addr <= 0;
-    else if(data_valid == 1)
-        Peak_Addr <= P_addr;
-	 else
-	     Peak_Addr <= 0; 
-end	 
     
 endmodule
