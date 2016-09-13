@@ -24,7 +24,8 @@ module RangeBin_Counter
     input wire rst,
     input wire cal_done,
     input wire SPEC_Acc_Done,
-    output reg [4:0] bin_counts
+    output reg [4:0] bin_counts,
+	 output reg [4:0] bin_counts_rd
     );
 
 reg cal_done_reg1;
@@ -44,6 +45,21 @@ begin
         bin_counts <= bin_counts + 1;
     else
         bin_counts <= bin_counts;
+end
+
+//比原有距离门提前两个时钟与读地址匹配
+always @(posedge clk or posedge rst)
+begin
+    if(rst == 1)
+    begin
+        bin_counts_rd <= 0;
+    end
+    else if(SPEC_Acc_Done)
+        bin_counts_rd <= 0;
+    else if(cal_done == 1)
+        bin_counts_rd <= bin_counts_rd + 1;
+    else
+        bin_counts_rd <= bin_counts_rd;
 end
 
 //延迟cal_done信号3个clk，得到cal_done_reg3
