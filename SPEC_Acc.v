@@ -28,8 +28,8 @@ module SPEC_Acc(
 	 input wire [4:0] RangeBin_Counter,	 // 从1开始计数
 	 input wire [4:0] RangeBin_Counter_reg,//比RangeBin_Counter早2个时钟，用于与读地址匹配
 	 input wire [9:0] RangeIn_counts,
-	 input wire Post_Process_Ctrl,
-	 input wire Peak_Detection_Ctrl,
+	 input wire BG_Deduction_EN,
+	 input wire Peak_Detection_EN,
 	 
     output reg [13:0] wraddr_out,
     output reg [13:0] rdaddr_out,
@@ -89,8 +89,8 @@ always @(posedge clk or posedge rst)
 begin
     if(rst == 1)
         DPRAM_BG_wea <= 0;
-	 else if(Post_Process_Ctrl == 1)
-        DPRAM_BG_wea <= 1;	 
+	 else if(BG_Deduction_EN == 1)
+        DPRAM_BG_wea <= 1;	  
     else
         DPRAM_BG_wea <= data_valid_in && (RangeBin_Counter < 2);
 end
@@ -102,6 +102,8 @@ always @(posedge clk or posedge rst)
 begin
     if(rst == 1)
         DPRAM_wea <= 0;
+	 else if(Peak_Detection_EN == 1)
+        DPRAM_wea <= 0;	 
     else
         DPRAM_wea <= data_valid_in && (RangeBin_Counter > 1);
 end
