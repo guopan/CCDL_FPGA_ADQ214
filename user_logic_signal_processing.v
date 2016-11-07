@@ -80,6 +80,7 @@ wire SPEC_Acc_Ctrl;
 wire DPRAM_wea;
 wire DPRAM_BG_wea;
 wire SPEC_Acc_Done;
+wire [13:0] rdaddr_out;//功率累加读地址
 
 // 距离门计数器
 wire [4:0] RangeBin_counts;
@@ -91,11 +92,13 @@ wire [15:0] Pulse_counts;
 wire Capture_En;
 
 // 背景噪声扣除
-wire Post_Process_Ctrl;
-wire Post_Process_Done;
+wire BG_Deduction_EN;
+wire BG_Deduction_Done;
 
 //峰值探测
-wire Peak_Detection_Ctrl;
+wire Peak_Detection_EN;
+wire[13:0] PD_rdaddr;//峰值探测读地址
+wire [3:0] RangeBin_reg;
 wire[31:0] Peak_Value;
 wire [9:0] Peak_Addr;
 wire [9:0] RangeIn_counts;
@@ -122,6 +125,7 @@ assign fft_in_data = data_out;
 assign user_register_o = {(16*NofUserRegistersOut){1'b0}};
 
 assign data_valid_o = data_valid_PSC;		// 临时赋值，待修正
+assign addrb_dpram = Peak_Detection_EN?PD_rdaddr:rdaddr_out;  //16DPRAM-读书地址 
 
 // Trigger 向量解码模块。输出触发开始信号。
 Trigger_Decoder Trigger_Decoder_m (
@@ -196,27 +200,27 @@ SPEC_Acc SPEC_Acc_m (
              .clk(clk_i),
              .rst(rst_i),
              .data_valid_in(data_valid_PSC),
-				 .Post_Process_Ctrl(Post_Process_Ctrl),
-				 .Peak_Detection_Ctrl(Peak_Detection_Ctrl),
+				 .BG_Deduction_EN(BG_Deduction_EN),
+				 .Peak_Detection_EN(Peak_Detection_EN),
 				 .RangeIn_counts(RangeIn_counts),
              .xk_index_reg1(xk_index_reg1),
              .data_index(data_index),
              .RangeBin_Counter(RangeBin_counts),
 				 .RangeBin_Counter_reg(RangeBin_counts_reg),
              .wraddr_out(addra_dpram),
-             .rdaddr_out(addrb_dpram),
+             .rdaddr_out(rdaddr_out),//添加引线
              .DPRAM_wea(DPRAM_wea),
              .DPRAM_BG_wea(DPRAM_BG_wea),
 			 .SPEC_Acc_Done(SPEC_Acc_Done)
          );
 
 // 背景噪声扣除模块
-Post_Process_m Post_Process_m (
+BG_Deduction_m BG_Deduction_m (
     .clk(clk_i), 
     .rst(rst_i), 
-    .Post_Process_Ctrl(Post_Process_Ctrl), 
+    .BG_Deduction_EN(BG_Deduction_EN), 
     .data_valid_in(data_valid_PSC), 
-    .Post_Process_Done(Post_Process_Done), 
+    .BG_Deduction_Done(BG_Deduction_Done), 
     .PP_working(PP_working)
     );
 	 
@@ -225,14 +229,16 @@ Post_Process_m Post_Process_m (
 Peak_Detection Peak_Detection_m (
     .clk(clk_i), 
     .rst(rst_i), 
-    .Peak_Detection_Ctrl(Peak_Detection_Ctrl), 
-    .data_valid_in(data_valid_PSC), 
-    .RangBin_counts(RangeBin_counts), 
-    .D_out(doutb_dpram), 
-    .D_addr(data_index), 
+    .Peak_Detection_EN(Peak_Detection_EN), 
+    //.data_valid_in(data_valid_PSC), 
+    //.RangBin_counts(RangeBin_counts), 
+    .D_in(doutb_dpram), 
+    .D_addr(addrb_dpram), //或可省略
     .Peak_Value(Peak_Value), 
     .Peak_Addr(Peak_Addr),
-	 .RangeIn_counts(RangeIn_counts)
+	 .RangeIn_counts(RangeIn_counts),
+	 .RangeBin_reg(RangeBin_reg),
+	 .PD_rdaddr(PD_rdaddr)
     );
 	 
 // 累加过程_DPRAM
@@ -243,9 +249,9 @@ begin
     else if(SPEC_Acc_Ctrl == 1)
         // dina_dpram <= Power_Spec + doutb_dpram;
         dina_dpram <= Power_Spec + doutb_dpram;		//debug 用 
-    else if(Post_Process_Ctrl == 1)
-        dina_dpram <= doutb_dpram - doutb_dpram_BG;//扣除背景噪声	 
-    else if(Peak_Detection_Ctrl == 1)
+    else if(BG_Deduction_EN == 1)
+        dina_dpram <= doutb_dpram + 1;//doutb_dpram_BG;//扣除背景噪声&&测试用	 
+    else if(Peak_Detection_EN == 1)
 	     dina_dpram <= doutb_dpram;
 	 else
         // dina_dpram <= Power_Spec;		//待定
@@ -260,7 +266,7 @@ begin
     else if(SPEC_Acc_Ctrl == 1)
         // dina_dpram_BG <= Power_Spec + doutb_dpram_BG;
         dina_dpram_BG <= Power_Spec + doutb_dpram_BG;		//debug 	 
-    else if(Post_Process_Ctrl == 1)
+    else if(BG_Deduction_EN == 1)
 	     dina_dpram_BG <= doutb_dpram_BG;//取出背景噪声
 	 else
         // dina_dpram_BG <= Power_Spec;		//待定
@@ -286,8 +292,8 @@ Group_Ctrl Group_Ctrl_m (
     .Pulse_counts(Pulse_counts), 
     .Capture_En(Capture_En), 
     .SPEC_Acc_Ctrl(SPEC_Acc_Ctrl),
-	 .Post_Process_Ctrl(Post_Process_Ctrl),
-	 .Peak_Detection_Ctrl(Peak_Detection_Ctrl)
+	 .BG_Deduction_EN(BG_Deduction_EN),
+	 .Peak_Detection_EN(Peak_Detection_EN)
     );
 	
 // 脉冲计数器

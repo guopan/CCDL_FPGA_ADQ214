@@ -18,15 +18,19 @@
 // Additional Comments: 
 //
 //////////////////////////////////////////////////////////////////////////////////
-module Group_Ctrl(
+module Group_Ctrl
+ #(parameter
+   TOTAL_PULSE = 4
+   )
+  (
     input wire clk,
     input wire rst,
     input wire [15:0] Pulse_counts,
 	 
     output reg Capture_En,
 	 output reg SPEC_Acc_Ctrl,
-	 output reg Post_Process_Ctrl,
-	 output reg Peak_Detection_Ctrl
+	 output reg BG_Deduction_EN,
+	 output reg Peak_Detection_EN
     );
 	
 	
@@ -36,23 +40,23 @@ begin
     if(rst == 1)
         SPEC_Acc_Ctrl <= 0;
     else
-        SPEC_Acc_Ctrl <= Pulse_counts > 1 && Pulse_counts < 3;
+        SPEC_Acc_Ctrl <= Pulse_counts > 1 && Pulse_counts < TOTAL_PULSE-1;
 end
 // 累计足够脉冲后，开始扣除背景噪声
 always @(posedge clk or posedge rst)
 begin
     if(rst == 1)
-	     Post_Process_Ctrl <= 0;
+	     BG_Deduction_EN <= 0;
     else 
-        Post_Process_Ctrl <= Pulse_counts > 2 && Pulse_counts < 4;
+        BG_Deduction_EN <= Pulse_counts > TOTAL_PULSE-2 && Pulse_counts < TOTAL_PULSE;
 end
 // 开始进行峰值探测
 always @(posedge clk or posedge rst)
 begin
     if(rst == 1)
-	     Peak_Detection_Ctrl <= 0; 
+	     Peak_Detection_EN <= 0; 
 	 else
-        Peak_Detection_Ctrl <= Pulse_counts > 3;
+        Peak_Detection_EN <= Pulse_counts > TOTAL_PULSE-1;
 end		  
        	 
 // 采集过程的使能信号，接收上位机指令置高，采集完成置低
