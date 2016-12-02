@@ -92,11 +92,11 @@ wire [15:0] Pulse_counts;
 wire Capture_En;
 
 // 背景噪声扣除
-wire BG_Deduction_EN;
+wire BG_Deduction_En;
 wire BG_Deduction_Done;
 
 //峰值探测
-wire Peak_Detection_EN;
+wire Peak_Detection_En;
 wire[13:0] PD_rdaddr;//峰值探测读地址
 wire [3:0] RangeBin_reg;
 wire[31:0] Peak_Value;
@@ -125,7 +125,7 @@ assign fft_in_data = data_out;
 assign user_register_o = {(16*NofUserRegistersOut){1'b0}};
 
 assign data_valid_o = data_valid_PSC;		// 临时赋值，待修正
-assign addrb_dpram = Peak_Detection_EN?PD_rdaddr:rdaddr_out;  //16DPRAM-读书地址 
+assign addrb_dpram = Peak_Detection_En?PD_rdaddr:rdaddr_out;  //16DPRAM-读书地址
 
 // Trigger 向量解码模块。输出触发开始信号。
 Trigger_Decoder Trigger_Decoder_m (
@@ -170,7 +170,7 @@ Power_Spec_Cal Power_Spec_Cal_m (
                    .xk_index_reg1(xk_index_reg1),
                    .data_index(data_index),
                    .data_valid(data_valid_PSC),
-				   .FFT_done(FFT_done)
+                   .FFT_done(FFT_done)
                );
 
 // 功率谱存储模块，双口RAM，位宽32，深度16*1024。
@@ -183,64 +183,63 @@ DPRAM_Buffer DPRAM_Buffer_m (
                  .addrb(addrb_dpram), 		// input [13 : 0] addrb
                  .doutb(doutb_dpram) 		// output [31 : 0] doutb
              );
-			 
+
 // 背景噪声功率谱存储模块，双口RAM，位宽32，深度1024。
 DPRAM_Buffer_BG DPRAM_Buffer_BG_m (
-  .clka(clk_i), 				// input clka
-  .wea(DPRAM_BG_wea), 			// input [0 : 0] wea
-  .addra(addra_dpram[9:0]), 	// input [9 : 0] addra
-  .dina(dina_dpram_BG), 		// input [31 : 0] dina
-  .clkb(clk_i), 				// input clkb
-  .addrb(addrb_dpram[9:0]), 	// input [9 : 0] addrb
-  .doutb(doutb_dpram_BG) 		// output [31 : 0] doutb
-);
-			 
+                    .clka(clk_i), 				// input clka
+                    .wea(DPRAM_BG_wea), 		// input [0 : 0] wea
+                    .addra(addra_dpram[9:0]), 	// input [9 : 0] addra
+                    .dina(dina_dpram_BG), 		// input [31 : 0] dina
+                    .clkb(clk_i), 				// input clkb
+                    .addrb(addrb_dpram[9:0]), 	// input [9 : 0] addrb
+                    .doutb(doutb_dpram_BG) 		// output [31 : 0] doutb
+                );
+
 // 功率谱累加控制模块，从DPRAM_Buffer读出累加值，与新的功率谱数据累加后，写回原地址
 SPEC_Acc SPEC_Acc_m (
              .clk(clk_i),
              .rst(rst_i),
              .data_valid_in(data_valid_PSC),
-				 .BG_Deduction_EN(BG_Deduction_EN),
-				 .Peak_Detection_EN(Peak_Detection_EN),
-				 .RangeIn_counts(RangeIn_counts),
+             .BG_Deduction_En(BG_Deduction_En),
+             .Peak_Detection_En(Peak_Detection_En),
+             .RangeIn_counts(RangeIn_counts),
              .xk_index_reg1(xk_index_reg1),
              .data_index(data_index),
              .RangeBin_Counter(RangeBin_counts),
-				 .RangeBin_Counter_reg(RangeBin_counts_reg),
+             .RangeBin_Counter_reg(RangeBin_counts_reg),
              .wraddr_out(addra_dpram),
              .rdaddr_out(rdaddr_out),//添加引线
              .DPRAM_wea(DPRAM_wea),
              .DPRAM_BG_wea(DPRAM_BG_wea),
-			 .SPEC_Acc_Done(SPEC_Acc_Done)
+             .SPEC_Acc_Done(SPEC_Acc_Done)
          );
 
 // 背景噪声扣除模块
-BG_Deduction_m BG_Deduction_m (
-    .clk(clk_i), 
-    .rst(rst_i), 
-    .BG_Deduction_EN(BG_Deduction_EN), 
-    .data_valid_in(data_valid_PSC), 
-    .BG_Deduction_Done(BG_Deduction_Done), 
-    .PP_working(PP_working)
-    );
-	 
-// 峰值检测
+BG_Deduction BG_Deduction_m (
+                 .clk(clk_i),
+                 .rst(rst_i),
+                 .BG_Deduction_En(BG_Deduction_En),
+                 .data_valid_in(data_valid_PSC),
+                 .BG_Deduction_Done(BG_Deduction_Done),
+                 .PP_working(PP_working)
+             );
 
+// 峰值检测
 Peak_Detection Peak_Detection_m (
-    .clk(clk_i), 
-    .rst(rst_i), 
-    .Peak_Detection_EN(Peak_Detection_EN), 
-    //.data_valid_in(data_valid_PSC), 
-    //.RangBin_counts(RangeBin_counts), 
-    .D_in(doutb_dpram), 
-    .D_addr(addrb_dpram), //或可省略
-    .Peak_Value(Peak_Value), 
-    .Peak_Addr(Peak_Addr),
-	 .RangeIn_counts(RangeIn_counts),
-	 .RangeBin_reg(RangeBin_reg),
-	 .PD_rdaddr(PD_rdaddr)
-    );
-	 
+                   .clk(clk_i),
+                   .rst(rst_i),
+                   .Peak_Detection_En(Peak_Detection_En),
+                   //.data_valid_in(data_valid_PSC),
+                   //.RangBin_counts(RangeBin_counts),
+                   .D_in(doutb_dpram),
+                   .D_addr(addrb_dpram), //或可省略
+                   .Peak_Value(Peak_Value),
+                   .Peak_Addr(Peak_Addr),
+                   .RangeIn_counts(RangeIn_counts),
+                   .RangeBin_reg(RangeBin_reg),
+                   .PD_rdaddr(PD_rdaddr)
+               );
+
 // 累加过程_DPRAM
 always @(posedge clk_i or posedge rst_i)
 begin
@@ -248,12 +247,12 @@ begin
         dina_dpram <= 0;
     else if(SPEC_Acc_Ctrl == 1)
         // dina_dpram <= Power_Spec + doutb_dpram;
-        dina_dpram <= Power_Spec + doutb_dpram;		//debug 用 
-    else if(BG_Deduction_EN == 1)
-        dina_dpram <= doutb_dpram + 1;//doutb_dpram_BG;//扣除背景噪声&&测试用	 
-    else if(Peak_Detection_EN == 1)
-	     dina_dpram <= doutb_dpram;
-	 else
+        dina_dpram <= Power_Spec + doutb_dpram;		//debug 用
+    else if(BG_Deduction_En == 1)
+        dina_dpram <= doutb_dpram + 1;//doutb_dpram_BG;//扣除背景噪声&&测试用
+    else if(Peak_Detection_En == 1)
+        dina_dpram <= doutb_dpram;
+    else
         // dina_dpram <= Power_Spec;		//待定
         dina_dpram <= Power_Spec;		//debug 用
 end
@@ -265,48 +264,45 @@ begin
         dina_dpram_BG <= 0;
     else if(SPEC_Acc_Ctrl == 1)
         // dina_dpram_BG <= Power_Spec + doutb_dpram_BG;
-        dina_dpram_BG <= Power_Spec + doutb_dpram_BG;		//debug 	 
-    else if(BG_Deduction_EN == 1)
-	     dina_dpram_BG <= doutb_dpram_BG;//取出背景噪声
-	 else
+        dina_dpram_BG <= Power_Spec + doutb_dpram_BG;		//debug
+    else if(BG_Deduction_En == 1)
+        dina_dpram_BG <= doutb_dpram_BG;//取出背景噪声
+    else
         // dina_dpram_BG <= Power_Spec;		//待定
         dina_dpram_BG <= Power_Spec;		//debug 用
 end
 
-			
-
 // 距离门计数器
 RangeBin_Counter RangeBin_Counter_m (
-    .clk(clk_i), 
-    .rst(rst_i), 
-    .cal_done(FFT_done), 
-	.SPEC_Acc_Done(SPEC_Acc_Done),
-    .bin_counts(RangeBin_counts),
-	 .bin_counts_rd(RangeBin_counts_reg)
-    );
+                     .clk(clk_i),
+                     .rst(rst_i),
+                     .cal_done(FFT_done),
+                     .SPEC_Acc_Done(SPEC_Acc_Done),
+                     .bin_counts(RangeBin_counts),
+                     .bin_counts_rd(RangeBin_counts_reg)
+                 );
 
 // 整组数据的时序控制
 Group_Ctrl Group_Ctrl_m (
-    .clk(clk_i), 
-    .rst(rst_i), 
-    .Pulse_counts(Pulse_counts), 
-    .Capture_En(Capture_En), 
-    .SPEC_Acc_Ctrl(SPEC_Acc_Ctrl),
-	 .BG_Deduction_EN(BG_Deduction_EN),
-	 .Peak_Detection_EN(Peak_Detection_EN)
-    );
-	
+               .clk(clk_i),
+               .rst(rst_i),
+               .Pulse_counts(Pulse_counts),
+               .Capture_En(Capture_En),
+               .SPEC_Acc_Ctrl(SPEC_Acc_Ctrl),
+               .BG_Deduction_En(BG_Deduction_En),
+               .Peak_Detection_En(Peak_Detection_En)
+           );
+
 // 脉冲计数器
 Pulse_Counter Pulse_Counter_m (
-    .clk(clk_i), 
-    .rst(rst_i), 
-    .SPEC_Acc_Done(SPEC_Acc_Done), 
-    .Capture_En(Capture_En), 
-    .Pulse_counts(Pulse_counts)
-    );
-	
-	
-	
+                  .clk(clk_i),
+                  .rst(rst_i),
+                  .SPEC_Acc_Done(SPEC_Acc_Done),
+                  .Capture_En(Capture_En),
+                  .Pulse_counts(Pulse_counts)
+              );
+
+
 endmodule
 
 
