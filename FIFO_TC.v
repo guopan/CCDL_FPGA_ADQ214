@@ -1,46 +1,45 @@
 `timescale 1ns / 1ps
-//////////////////////////////////////////////////////////////////////////////////
-// Company:
-// Engineer:
-//
-// Create Date:    15:31:05 07/14/2016
-// Design Name:
-// Module Name:    FIFO_TC
-// Project Name:
-// Target Devices:
-// Tool versions:
-// Description:
-//
-// Dependencies:
-//
-// Revision:
-// Revision 0.01 - File Created
-// Additional Comments:
-//
-//////////////////////////////////////////////////////////////////////////////////
+//==============================================================================
+// Copyright (C) 2016 By GUO Pan
+// guopan@bit.edu.cn, All Rights Reserved
+//==============================================================================
+// Module : 	FIFO_TC
+// Author : 	GUO Pan
+// Contact : 	guopan@bit.edu.cn
+// Date : 		Jul.10.2016
+//==============================================================================
+// Description :	用于实现预触发
+//					rst之后，就一直工作
+//==============================================================================
+
 module FIFO_TC
-       #(parameter
-         DELAY_NUM = 69+4)		// +4 是为了匹配 FIFO_in 的读出延迟
+       #(
+           parameter BIT_WIDTH = 14
+       )
        (
            input wire clk,
            input wire rst,
-           input wire [15:0]	x0_i,
-           input wire [15:0]	x0z_i,
-           output wire [31:0]	fifo_tc_dataout,
-           output reg         trigger_tc_ready
+           input wire [15:0]    x0_i,
+           input wire [15:0]    x0z_i,
+
+           output wire [BIT_WIDTH*2-1:0]   fifo_tc_dataout,
+           output reg           trigger_tc_ready
        );
+
+parameter DELAY_NUM = 250+3;	  // +3 是为了匹配 FIFO_in 的写入使能wr_en延迟？
+// 250是为了预触发，500个采样点
 
 // Inter wire or reg
 reg   rd_en;
 wire  wr_en;
-wire  [31:0] data_in;
+wire  [BIT_WIDTH*2-1 : 0] data_in;
 reg   [12:0] din_counter;
 wire full;
 wire empty;
 
-// 赋值
+// 只要不rst，就一直写入
 assign wr_en = ~rst;
-assign data_in = {x0_i,x0z_i};
+assign data_in = {x0_i[BIT_WIDTH-1:0], x0z_i[BIT_WIDTH-1:0]};
 
 // 计数器
 always @(posedge clk or posedge rst)
@@ -73,11 +72,11 @@ begin
         trigger_tc_ready <= rd_en;
 end
 
-//FIFO IP 写入深度1024，输入位宽32bit，输出位宽32bit，读写时钟同步
+//FIFO IP 写入深度256，输入位宽32bit，输出位宽32bit，读写时钟同步
 Fifo_Buffer_Tc Fifo_Buffer_Tc_m (
                    .clk(clk), // input clk
-                   .rst(rst), // input rst
-                   .din(data_in), // input [31 : 0] din
+                   .srst(rst), // input rst
+                   .din(data_in), // input [BIT_WIDTH*2-1 : 0] din
                    .wr_en(wr_en), // input wr_en
                    .rd_en(rd_en), // input rd_en
                    .dout(fifo_tc_dataout), // output [31 : 0] dout

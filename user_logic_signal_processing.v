@@ -4,7 +4,10 @@
 // Signal processing user logic
 //
 //////////////////////////////////////////////////////////////////////////////////
-
+`define USER_LOGIC_PARTNUM_1 16'd0
+`define USER_LOGIC_PARTNUM_2 16'd0
+`define USER_LOGIC_PARTNUM_3 16'd0
+`define USER_LOGIC_PARTNUM_REV 16'd0
 
 module user_logic_signal_processing
        #(
@@ -30,7 +33,9 @@ module user_logic_signal_processing
            output wire signed [NofBits-1:0]           y1_o,
            output wire signed [NofBits-1:0]           y1z_o,
            output wire [3:0]                          trigger_vector_o,
-           output wire 							   data_valid_o,
+
+           // Data_valid
+           output wire data_valid_o,
 
            //User registers
            input wire [16*8-1:0]                      user_register_i,
@@ -42,103 +47,93 @@ module user_logic_signal_processing
            output wire [15:0]                         ul_partnum_rev_o
 
        );
+parameter BIT_WIDTH = 14;
 
-//Inter wire or reg
-//TR
+// ç”µå¹³è§¦å‘ä¿¡å·ç”Ÿæˆ
+reg [15:0] Trigger_Level = 16'd500;
 wire trigger_start;
-//TC
-wire [31:0] fifo_tc_dataout;
+wire [1:0] trigger_vector;
+// FIFO_TC
+wire [BIT_WIDTH*2-1:0] fifo_tc_dataout;
 wire trigger_ready;
-
-//IN
-wire [31:0] fifo_in_data;
-wire [15:0] data_out;
+// FIFO_IN
+wire [BIT_WIDTH-1 : 0] fifo_in_data_out;
 wire fifo_in_valid;
-//FFT
-wire [15:0] fft_in_data;
 
-wire [9:0]  data_index;
-wire FFT_done;
-// ¹¦ÂÊÆ×¼ÆËã
-wire [31:0] Power_Spec;
+// åŠŸç‡è°±è®¡ç®—
+wire [49:0] Power_Spec;
 wire data_valid_PSC;
-wire [9:0] xn_index;
-wire [9:0] xk_index_reg1;
-wire [9:0] xk_index_reg3;
 
-// Ë«¿ÚRAM
-wire [13:0] addra_dpram;
-reg  [31:0] dina_dpram;
-wire [13:0] addrb_dpram;
-wire [31:0] doutb_dpram;
+// åŠŸç‡è°±ç´¯åŠ ç¼“å†²
+wire is_first_pls;
+wire [63:0] FIFO_Buffer_data_out;
 
-reg  [31:0] dina_dpram_BG;
-wire [31:0] doutb_dpram_BG;
-
-// ¹¦ÂÊÆ×ÀÛ¼Ó
-wire SPEC_Acc_Ctrl;
-wire DPRAM_wea;
-wire DPRAM_BG_wea;
-wire SPEC_Acc_Done;
-wire [13:0] rdaddr_out;//¹¦ÂÊÀÛ¼Ó¶ÁµØÖ·
-
-// ¾àÀëÃÅ¼ÆÊıÆ÷
-wire [4:0] RangeBin_counts;
-wire [4:0] RangeBin_counts_reg;
-
-// Âö³å¼ÆÊıÆ÷
+// è„‰å†²è®¡æ•°å™¨
 wire [15:0] Pulse_counts;
 
+// åˆ†ç»„æ§åˆ¶
 wire Capture_En;
 
-// ±³¾°ÔëÉù¿Û³ı
-wire BG_Deduction_En;
-wire BG_Deduction_Done;
+// SPI_CMD
+wire [15:0] UR_nTotalPoins;
+wire [15:0] UR_HighLim_Spec;
+wire [15:0] UR_LowLim_Spec;
+wire [15:0] UR_nRangeBins;
+wire [15:0] UR_nPoints_RB;
+wire [15:0] UR_nACC_Pulses;
+wire [15:0] UR_TriggerLevel;
+wire [15:0] UR_CMD;
 
-//·åÖµÌ½²â
-wire Peak_Detection_En;
-wire[13:0] PD_rdaddr;//·åÖµÌ½²â¶ÁµØÖ·
-wire [3:0] RangeBin_reg;
-wire[31:0] Peak_Value;
-wire [9:0] Peak_Addr;
-wire [9:0] RangeIn_counts;
+// æ¨¡å—è¾“å‡º
+reg [NofBits-1:0] y0_out;
+reg [NofBits-1:0] y0z_out;
+reg [NofBits-1:0] y1_out;
+reg [NofBits-1:0] y1z_out;
+
+
 // -----------------------------------------------------------------------------------------------
 // This section sets the user logic part number, which can be set in the user logic build script
 // using set_userlogicpartnumber and read out through the API using GetAlgUserLogicPartNumber().
 // Either rebuild the project or modify the include file, in order to change part number.
-   `include "userlogicpartnumber.v"
+   // `include "userlogicpartnumber.v"
 assign ul_partnum_1_o      = `USER_LOGIC_PARTNUM_1;
 assign ul_partnum_2_o      = `USER_LOGIC_PARTNUM_2;
 assign ul_partnum_3_o      = `USER_LOGIC_PARTNUM_3;
 assign ul_partnum_rev_o    = `USER_LOGIC_PARTNUM_REV;
-// -----------------------------------------------------------------------------------------------
+//-----------------------------------------------------------------------------------------------
 
-assign y0_o = doutb_dpram[15:0];
-assign y0z_o = doutb_dpram[31:16];
-assign y1_o = x1_i;
-assign y1z_o = x1z_i;
+assign y0_o = y0_out;
+assign y0z_o = y0z_out;
+assign y1_o = y1_out;
+assign y1z_o = y1z_out;
 assign trigger_vector_o = trigger_vector_i;
 
-assign fifo_in_data = fifo_tc_dataout;
-assign fft_in_data = data_out;
 
-assign user_register_o = {(16*NofUserRegistersOut){1'b0}};
+// assign user_register_o = {(16*NofUserRegistersOut){1'b0}};
 
-assign data_valid_o = data_valid_PSC;		// ÁÙÊ±¸³Öµ£¬´ıĞŞÕı
-assign addrb_dpram = Peak_Detection_En?PD_rdaddr:rdaddr_out;  //16DPRAM-¶ÁÊéµØÖ·
+assign user_register_o[4*16-1:3*16] = UR_nPoints_RB;
+assign user_register_o[3*16-1:2*16] = UR_nACC_Pulses;
+assign user_register_o[2*16-1:1*16] = UR_TriggerLevel;
+assign user_register_o[1*16-1:0*16] = UR_CMD;
+// UR_HighLim_Spec;
+// UR_LowLim_Spec;
+// UR_nRangeBins;
 
-// Trigger ÏòÁ¿½âÂëÄ£¿é¡£Êä³ö´¥·¢¿ªÊ¼ĞÅºÅ¡£
-Trigger_Decoder Trigger_Decoder_m (
-                    .clk(clk_i),
-                    .rst(rst_i),
-                    .Capture_En(Capture_En),
-                    .trigger_ready(trigger_ready),
-                    .trigger_vector(trigger_vector_i),
-                    .trigger_start(trigger_start)
-                );
 
-// FIFO_TC Ä£¿é¡£Ğ´ÈëÉî¶È1024£¬ÊäÈëÎ»¿í32bit£¬Êä³öÎ»¿í32bit£¬¶ÁĞ´Ê±ÖÓÍ¬²½¡£
-// ¶ÁĞ´Ê¹ÄÜÑÓÊ±69¸öÊ±ÖÓ¡£
+// Trigger ç”Ÿæˆæ¨¡å—ã€‚è¾“å‡ºè§¦å‘å¼€å§‹ä¿¡å·ã€‚
+Trigger_Generator Trigger_Generator_m (
+                      .clk(clk_i),
+                      .rst(rst_i),
+                      .Capture_En(Capture_En),
+                      .Trigger_Ready(trigger_ready),
+                      .Trigger_Level(UR_TriggerLevel),
+                      .x0_i(x0_i),
+                      .x0z_i(x0z_i),
+                      .trigger_start(trigger_start),
+                      .trigger_vector(trigger_vector)
+                  );
+
+// FIFO_TC æ¨¡å—ã€‚å†™å…¥æ·±åº¦1024ï¼Œè¾“å…¥ä½å®½32bitï¼Œè¾“å‡ºä½å®½32bitï¼Œè¯»å†™æ—¶é’ŸåŒæ­¥ã€‚
 FIFO_TC FIFO_TC_m (
             .clk(clk_i),
             .rst(rst_i),
@@ -148,161 +143,108 @@ FIFO_TC FIFO_TC_m (
             .trigger_tc_ready(trigger_ready)
         );
 
-// FIFO_IN Ä£¿é¡£ÊäÈëÎ»¿í32bit£¬Êä³öÎ»¿í16bit£¬Ğ´ÈëÉî¶È4096¡£¶ÁĞ´Ê±ÖÓÍ¬²½¡£
-// ¶ÁÊı250¸öµãºóÊä³ö²¹Áã¡£
+// FIFO_IN æ¨¡å—
+// è¾“å…¥ä½å®½28bitï¼Œè¾“å‡ºä½å®½14bitï¼Œå†™å…¥æ·±åº¦2048@28bitã€‚è¯»å†™æ—¶é’ŸåŒæ­¥ã€‚
+// æ¯ä¸ªè·ç¦»é—¨ï¼Œè¯»å‡º UR_nPoints_RB ä¸ªç‚¹åè¾“å‡ºè¡¥é›¶ã€‚
+// ç”±äºè¾“å‡ºä½å®½æŠ˜åŠï¼Œæ‰€ä»¥TOTAL_POINTS = UR_nTotalPoins/2
 FIFO_in FIFO_in_m (
             .rst(rst_i),
             .clk(clk_i),
-            .data_in(fifo_in_data),
+            .data_in(fifo_tc_dataout),
             .start(trigger_start),
-            .data_out(data_out),
+			.RANGEBIN_LENGTH(UR_nPoints_RB),
+			.TOTAL_POINTS({1'b0,UR_nTotalPoins[15:1]}),	
+            .data_out(fifo_in_data_out),
             .data_valid(fifo_in_valid)
         );
 
-// ¹¦ÂÊÆ×¼ÆËãÄ£¿é£¬¼ÆËã1024µãFFT£¬¼°Æä¹¦ÂÊÆ×¡£
+// è„‰å†²è®¡æ•°å™¨
+Pulse_Counter Pulse_Counter_m (
+                  .clk(clk_i),
+                  .rst(rst_i),
+                  .data_valid_i(data_valid_PSC),
+                  .Capture_En(Capture_En),
+                  .Pulse_counts(Pulse_counts),
+				  .is_first_pls(is_first_pls)
+              );
+
+// åŠŸç‡è°±è®¡ç®—æ¨¡å—ï¼Œè®¡ç®—1024ç‚¹FFTï¼ŒåŠå…¶åŠŸç‡è°±ã€‚
 Power_Spec_Cal Power_Spec_Cal_m (
                    .clk(clk_i),
                    .rst(rst_i),
                    .fft_start(fifo_in_valid),
-                   .fifo_data(fft_in_data),
+                   .fifo_data(fifo_in_data_out),
                    .Power_Spec(Power_Spec),
-                   .xn_index(xn_index),
-                   .xk_index_reg1(xk_index_reg1),
-                   .data_index(data_index),
-                   .data_valid(data_valid_PSC),
-                   .FFT_done(FFT_done)
+                   .data_valid(data_valid_PSC)
                );
 
-// ¹¦ÂÊÆ×´æ´¢Ä£¿é£¬Ë«¿ÚRAM£¬Î»¿í32£¬Éî¶È16*1024¡£
-DPRAM_Buffer DPRAM_Buffer_m (
-                 .clka(clk_i), 				// input clka
-                 .wea(DPRAM_wea), 			// input [0 : 0] wea, Port AµÄĞ´ÔÊĞíĞÅºÅ
-                 .addra(addra_dpram), 		// input [13 : 0] addra
-                 .dina(dina_dpram), 		// input [31 : 0] dina
-                 .clkb(clk_i), 				// input clkb
-                 .addrb(addrb_dpram), 		// input [13 : 0] addrb
-                 .doutb(doutb_dpram) 		// output [31 : 0] doutb
-             );
+// åŠŸç‡è°±ç´¯åŠ ç¼“å†²Buffer
+FIFO_Buffer FIFO_Buffer_m (
+    .clk(clk_i), 
+    .rst(rst_i), 
+    .data_in(Power_Spec), 
+    .is_first_pls(is_first_pls), 
+    .valid_in(data_valid_PSC), 
+    .Buffer_En(Capture_En), 
+    .data_out(FIFO_Buffer_data_out), 
+    .valid_out(data_valid_o)
+    );
 
-// ±³¾°ÔëÉù¹¦ÂÊÆ×´æ´¢Ä£¿é£¬Ë«¿ÚRAM£¬Î»¿í32£¬Éî¶È1024¡£
-DPRAM_Buffer_BG DPRAM_Buffer_BG_m (
-                    .clka(clk_i), 				// input clka
-                    .wea(DPRAM_BG_wea), 		// input [0 : 0] wea
-                    .addra(addra_dpram[9:0]), 	// input [9 : 0] addra
-                    .dina(dina_dpram_BG), 		// input [31 : 0] dina
-                    .clkb(clk_i), 				// input clkb
-                    .addrb(addrb_dpram[9:0]), 	// input [9 : 0] addrb
-                    .doutb(doutb_dpram_BG) 		// output [31 : 0] doutb
-                );
-
-// ¹¦ÂÊÆ×ÀÛ¼Ó¿ØÖÆÄ£¿é£¬´ÓDPRAM_Buffer¶Á³öÀÛ¼ÓÖµ£¬ÓëĞÂµÄ¹¦ÂÊÆ×Êı¾İÀÛ¼Óºó£¬Ğ´»ØÔ­µØÖ·
-SPEC_Acc SPEC_Acc_m (
-             .clk(clk_i),
-             .rst(rst_i),
-             .data_valid_in(data_valid_PSC),
-             .BG_Deduction_En(BG_Deduction_En),
-             .Peak_Detection_En(Peak_Detection_En),
-             .RangeIn_counts(RangeIn_counts),
-             .xk_index_reg1(xk_index_reg1),
-             .data_index(data_index),
-             .RangeBin_Counter(RangeBin_counts),
-             .RangeBin_Counter_reg(RangeBin_counts_reg),
-             .wraddr_out(addra_dpram),
-             .rdaddr_out(rdaddr_out),//Ìí¼ÓÒıÏß
-             .DPRAM_wea(DPRAM_wea),
-             .DPRAM_BG_wea(DPRAM_BG_wea),
-             .SPEC_Acc_Done(SPEC_Acc_Done)
-         );
-
-// ±³¾°ÔëÉù¿Û³ıÄ£¿é
-BG_Deduction BG_Deduction_m (
-                 .clk(clk_i),
-                 .rst(rst_i),
-                 .BG_Deduction_En(BG_Deduction_En),
-                 .data_valid_in(data_valid_PSC),
-                 .BG_Deduction_Done(BG_Deduction_Done),
-                 .PP_working(PP_working)
-             );
-
-// ·åÖµ¼ì²â
-Peak_Detection Peak_Detection_m (
-                   .clk(clk_i),
-                   .rst(rst_i),
-                   .Peak_Detection_En(Peak_Detection_En),
-                   //.data_valid_in(data_valid_PSC),
-                   //.RangBin_counts(RangeBin_counts),
-                   .D_in(doutb_dpram),
-                   .D_addr(addrb_dpram), //»ò¿ÉÊ¡ÂÔ
-                   .Peak_Value(Peak_Value),
-                   .Peak_Addr(Peak_Addr),
-                   .RangeIn_counts(RangeIn_counts),
-                   .RangeBin_reg(RangeBin_reg),
-                   .PD_rdaddr(PD_rdaddr)
-               );
-
-// ÀÛ¼Ó¹ı³Ì_DPRAM
-always @(posedge clk_i or posedge rst_i)
-begin
-    if(rst_i == 1)
-        dina_dpram <= 0;
-    else if(SPEC_Acc_Ctrl == 1)
-        // dina_dpram <= Power_Spec + doutb_dpram;
-        dina_dpram <= Power_Spec + doutb_dpram;		//debug ÓÃ
-    else if(BG_Deduction_En == 1)
-        dina_dpram <= doutb_dpram + 1;//doutb_dpram_BG;//¿Û³ı±³¾°ÔëÉù&&²âÊÔÓÃ
-    else if(Peak_Detection_En == 1)
-        dina_dpram <= doutb_dpram;
-    else
-        // dina_dpram <= Power_Spec;		//´ı¶¨
-        dina_dpram <= Power_Spec;		//debug ÓÃ
-end
-
-// ÀÛ¼Ó¹ı³Ì_DPRAM_BG
-always @(posedge clk_i or posedge rst_i)
-begin
-    if(rst_i == 1)
-        dina_dpram_BG <= 0;
-    else if(SPEC_Acc_Ctrl == 1)
-        // dina_dpram_BG <= Power_Spec + doutb_dpram_BG;
-        dina_dpram_BG <= Power_Spec + doutb_dpram_BG;		//debug
-    else if(BG_Deduction_En == 1)
-        dina_dpram_BG <= doutb_dpram_BG;//È¡³ö±³¾°ÔëÉù
-    else
-        // dina_dpram_BG <= Power_Spec;		//´ı¶¨
-        dina_dpram_BG <= Power_Spec;		//debug ÓÃ
-end
-
-// ¾àÀëÃÅ¼ÆÊıÆ÷
-RangeBin_Counter RangeBin_Counter_m (
-                     .clk(clk_i),
-                     .rst(rst_i),
-                     .cal_done(FFT_done),
-                     .SPEC_Acc_Done(SPEC_Acc_Done),
-                     .bin_counts(RangeBin_counts),
-                     .bin_counts_rd(RangeBin_counts_reg)
-                 );
-
-// Õû×éÊı¾İµÄÊ±Ğò¿ØÖÆ
+// è„‰å†²é‡‡é›†åˆ†ç»„æ§åˆ¶
 Group_Ctrl Group_Ctrl_m (
-               .clk(clk_i),
-               .rst(rst_i),
-               .Pulse_counts(Pulse_counts),
-               .Capture_En(Capture_En),
-               .SPEC_Acc_Ctrl(SPEC_Acc_Ctrl),
-               .BG_Deduction_En(BG_Deduction_En),
-               .Peak_Detection_En(Peak_Detection_En)
-           );
+    .clk(clk_i), 
+    .rst(rst_i), 
+    .Pulse_counts(Pulse_counts), 
+    .UR_CMD(UR_CMD), 
+    .TOTAL_PULSE(UR_nACC_Pulses), 
+    .Capture_En(Capture_En)
+    );
 
-// Âö³å¼ÆÊıÆ÷
-Pulse_Counter Pulse_Counter_m (
-                  .clk(clk_i),
-                  .rst(rst_i),
-                  .SPEC_Acc_Done(SPEC_Acc_Done),
-                  .Capture_En(Capture_En),
-                  .Pulse_counts(Pulse_counts)
-              );
+//æ¥æ”¶ä¸Šä½æœºçš„SPIå‘½ä»¤
+SPI_CMD SPI_CMD_m (
+    .clk(clk_i), 
+    .rst(rst_i), 
+    .CMD_Update_Disable(Capture_En), 
+    .user_register_i(user_register_i), 
+    .UR_nTotalPoins(UR_nTotalPoins), 
+    .UR_HighLim_Spec(UR_HighLim_Spec), 
+    .UR_LowLim_Spec(UR_LowLim_Spec), 
+    .UR_nRangeBins(UR_nRangeBins), 
+    .UR_nPoints_RB(UR_nPoints_RB), 
+    .UR_nACC_Pulses(UR_nACC_Pulses), 
+    .UR_TriggerLevel(UR_TriggerLevel), 
+    .UR_CMD(UR_CMD)
+    );
 
+//å¯¹æ¨¡å—è¾“å‡ºy0_outå’Œy0z_outèµ‹å€¼
+always @ (posedge clk_i or posedge rst_i)
+begin:CHANNELA_OUTPUT
+    if(rst_i == 1)
+    begin
+        y0_out  <= 0;
+        y0z_out <= 0;
+    end
+    else
+    begin
+        y0_out  <= FIFO_Buffer_data_out[63:48];
+        y0z_out <= FIFO_Buffer_data_out[47:32];
+    end
+end
 
+//å¯¹æ¨¡å—è¾“å‡ºy1_outå’Œy1z_outèµ‹å€¼
+always @ (posedge clk_i or posedge rst_i)
+begin:CHANNELB_OUTPUT
+    if(rst_i == 1)
+    begin
+        y1_out  <= 0;
+        y1z_out <= 0;
+    end
+    else
+    begin
+        y1_out  <= FIFO_Buffer_data_out[31:16];
+        y1z_out <= FIFO_Buffer_data_out[15:0];
+    end
+end
 endmodule
 
 

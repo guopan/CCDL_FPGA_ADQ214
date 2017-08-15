@@ -2,15 +2,15 @@
 //
 // Copyright © 2009 Signal Processing Devices Sweden AB. All rights reserved.
 //
-// Module Name:
+// Module Name:    
 // Project Name:   ADQ
 // Revision:       $Revision: 571 $
-// Description:
+// Description:    
 //
 //////////////////////////////////////////////////////////////////////////////////
 
 // =============================================================================
-// Version register settings
+// Version register settings 
 // =============================================================================
 
 // Version Register Settings
@@ -22,7 +22,7 @@
 `define VER_REG_REL       1'b0  // 0 = code under development, 1 = released code
 
 // =============================================================================
-// LVDS interface settings
+// LVDS interface settings 
 // =============================================================================
 `define LVDS_AIN_SCRAMBLE  14'b01001001001011
 `define LVDS_BIN_SCRAMBLE  14'b10101001000100

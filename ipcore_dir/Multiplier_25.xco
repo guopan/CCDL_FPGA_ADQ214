@@ -1,7 +1,7 @@
 ##############################################################
 #
-# Xilinx Core Generator version 14.3
-# Date: Fri Aug 19 09:07:51 2016
+# Xilinx Core Generator version 14.7
+# Date: Thu Aug 03 09:03:59 2017
 #
 ##############################################################
 #
@@ -41,19 +41,19 @@ SELECT Multiplier xilinx.com:ip:mult_gen:11.2
 # BEGIN Parameters
 CSET ccmimp=Distributed_Memory
 CSET clockenable=false
-CSET component_name=Multiplier_16
+CSET component_name=Multiplier_25
 CSET constvalue=129
 CSET internaluser=0
 CSET multiplier_construction=Use_Mults
 CSET multtype=Parallel_Multiplier
 CSET optgoal=Speed
-CSET outputwidthhigh=31
+CSET outputwidthhigh=49
 CSET outputwidthlow=0
-CSET pipestages=3
+CSET pipestages=4
 CSET portatype=Signed
-CSET portawidth=16
+CSET portawidth=25
 CSET portbtype=Signed
-CSET portbwidth=16
+CSET portbwidth=25
 CSET roundpoint=0
 CSET sclrcepriority=SCLR_Overrides_CE
 CSET syncclear=false
@@ -62,7 +62,7 @@ CSET userounding=false
 CSET zerodetect=false
 # END Parameters
 # BEGIN Extra information
-MISC pkg_timestamp=2012-08-28T14:51:52Z
+MISC pkg_timestamp=2013-07-22T11:36:26Z
 # END Extra information
 GENERATE
-# CRC: b0251779
+# CRC: 84927480

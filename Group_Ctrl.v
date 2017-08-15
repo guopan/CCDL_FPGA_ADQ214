@@ -1,74 +1,61 @@
 `timescale 1ns / 1ps
-//////////////////////////////////////////////////////////////////////////////////
-// Company:
-// Engineer:
-//
-// Create Date:    17:00:26 08/12/2016
-// Design Name:
-// Module Name:    Group_Ctrl
-// Project Name:
-// Target Devices:
-// Tool versions:
-// Description:
-//
-// Dependencies:
-//
-// Revision:
-// Revision 0.01 - File Created
-// Additional Comments:
-//
-//////////////////////////////////////////////////////////////////////////////////
+//==============================================================================
+// Copyright (C) 2017 By GUO Pan
+// guopan@bit.edu.cn, All Rights Reserved
+//==============================================================================
+// Module : 	Group_Ctrl
+// Author : 	GUO Pan
+// Contact : 	guopan@bit.edu.cn
+// Date : 		Jun.10.2017
+//==============================================================================
+// Description :	生成 Capture_En 信号，控制采集过程的开始和结束
+// 					上位机 UR_CMD[0] 命令的上升沿，开始采集
+// 					处理到足够的脉冲数之后，停止采集，开始上传结果
+//==============================================================================
+
 module Group_Ctrl
-       #(parameter
-         TOTAL_PULSE = 4
-        )
        (
            input wire clk,
            input wire rst,
            input wire [15:0] Pulse_counts,
+           input wire [15:0] UR_CMD,
+           input wire [15:0] TOTAL_PULSE,
 
-           output reg Capture_En,
-           output reg SPEC_Acc_Ctrl,
-           output reg BG_Deduction_En,
-           output reg Peak_Detection_En
+           output reg Capture_En
        );
 
+wire capture_start;
+reg  capture_done;
 
-// 是否累加DPRAM原有数据，高：累加，低：不累加（第一个脉冲）
+// 检测 UR_CMD[0] 的上升沿
+Posedge_detector Start_detector
+                 (
+                     .clk(clk),
+                     .rst(rst),
+                     .signal_in(UR_CMD[0]),
+                     .pulse_out(capture_start)
+                 );
+
+// 判断脉冲计数值是否达到 TOTAL_PULSE
 always @(posedge clk or posedge rst)
 begin
     if(rst == 1)
-        SPEC_Acc_Ctrl <= 0;
+        capture_done <= 0;
     else
-        SPEC_Acc_Ctrl <= Pulse_counts > 1 && Pulse_counts < TOTAL_PULSE-1;
-end
-
-// 累计足够脉冲后，开始扣除背景噪声
-always @(posedge clk or posedge rst)
-begin
-    if(rst == 1)
-        BG_Deduction_En <= 0;
-    else
-        BG_Deduction_En <= Pulse_counts > TOTAL_PULSE-2 && Pulse_counts < TOTAL_PULSE;
-end
-
-// 开始进行峰值探测
-always @(posedge clk or posedge rst)
-begin
-    if(rst == 1)
-        Peak_Detection_En <= 0;
-    else
-        Peak_Detection_En <= Pulse_counts > TOTAL_PULSE-1;
+        capture_done <= (Pulse_counts > TOTAL_PULSE - 1);
 end
 
 // 采集过程的使能信号，接收上位机指令置高，采集完成置低
-// 代码未完成
 always @(posedge clk or posedge rst)
 begin
     if(rst == 1)
         Capture_En <= 0;
-    else
+    else if(capture_start)
         Capture_En <= 1;
+    else if(capture_done)
+        Capture_En <= 0;
+    else
+        Capture_En <= Capture_En;
 end
 
 endmodule

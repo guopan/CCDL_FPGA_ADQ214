@@ -5,12 +5,12 @@
 // Module Name:    Version inclusion
 // Project Name:   ADQ
 // Revision:       $Revision: 571 $
-// Description:
+// Description:    
 //
 //////////////////////////////////////////////////////////////////////////////////
 
 // =============================================================================
-// Version register settings
+// Version register settings 
 // =============================================================================
 
 // Version Register Settings

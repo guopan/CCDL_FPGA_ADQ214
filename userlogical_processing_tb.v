@@ -1,26 +1,15 @@
 `timescale 1ns / 1ps
-
-////////////////////////////////////////////////////////////////////////////////
-// Company:
-// Engineer:
-//
-// Create Date:   20:51:22 07/07/2016
-// Design Name:   user_logic_signal_processing
-// Module Name:   D:/CustomerCD/FPGA/implementation/xilinx/userlogical_processing_test.v
-// Project Name:  ADQ214_devkit
-// Target Device:
-// Tool versions:
-// Description:
-//
-// Verilog Test Fixture created by ISE for module: user_logic_signal_processing
-//
-// Dependencies:
-//
-// Revision:
-// Revision 0.01 - File Created
-// Additional Comments:
-//
-////////////////////////////////////////////////////////////////////////////////
+//==============================================================================
+// Copyright (C) 2016 By GUO Pan
+// guopan@bit.edu.cn, All Rights Reserved
+//==============================================================================
+// Module : 	userlogical_processing_tb
+// Author : 	GUO Pan
+// Contact : 	guopan@bit.edu.cn
+// Date : 		Jun.08.2016
+//==============================================================================
+// Description :	user_logic_signal_processing模块的测试台
+//==============================================================================
 
 module userlogical_processing_tb;
 
@@ -32,7 +21,7 @@ reg [15:0] x0z_i;
 reg [15:0] x1_i;
 reg [15:0] x1z_i;
 reg [3:0] trigger_vector_i;
-reg [127:0] user_register_i;
+wire [127:0] user_register_i;	// user_register_from_host
 
 // Outputs
 wire [15:0] y0_o;
@@ -41,11 +30,30 @@ wire [15:0] y1_o;
 wire [15:0] y1z_o;
 wire [3:0] trigger_vector_o;
 wire data_valid_o;
-wire [63:0] user_register_o;
+wire [63:0] user_register_o;	// user_register_from_host
 wire [15:0] ul_partnum_1_o;
 wire [15:0] ul_partnum_2_o;
 wire [15:0] ul_partnum_3_o;
 wire [15:0] ul_partnum_rev_o;
+
+// 上位机命令定义
+reg [15:0] UR_nTotalPoins = 2000;
+reg [15:0] UR_HighLim_Spec = 0;
+reg [15:0] UR_LowLim_Spec = 0;
+reg [15:0] UR_nRangeBins = 8;
+reg [15:0] UR_nPoints_RB = 250;
+reg [15:0] UR_nACC_Pulses = 3;
+reg [15:0] UR_TriggerLevel = 500;
+reg [15:0] UR_CMD = 0;
+
+assign user_register_i[8*16-1:7*16] = UR_nTotalPoins;
+assign user_register_i[7*16-1:6*16] = UR_HighLim_Spec;
+assign user_register_i[6*16-1:5*16] = UR_LowLim_Spec;
+assign user_register_i[5*16-1:4*16] = UR_nRangeBins;
+assign user_register_i[4*16-1:3*16] = UR_nPoints_RB;
+assign user_register_i[3*16-1:2*16] = UR_nACC_Pulses;
+assign user_register_i[2*16-1:1*16] = UR_TriggerLevel;
+assign user_register_i[1*16-1:0*16] = UR_CMD;
 
 // 文件句柄
 integer output_file;
@@ -97,25 +105,24 @@ initial begin
     x1_i = 0;
     x1z_i = 0;
     trigger_vector_i = 0;
-    user_register_i = 0;
 	
-    $readmemb("sinewave.txt",mem);
+    $readmemb("rangewave.txt",mem);
 
     // Wait 100 ns for global reset to finish
     #100;
     rst_i = 0;
-    user_register_i = 16;
+    UR_CMD =  0;
 	
     // Add stimulus here
     #150;
     emit_1trigger(4'b0001,0);		//一个过早的触发，理论上不应该响应
-
+	UR_CMD = 1;
 
     #600000;
     rst_i = 1;
 	#5 rst_i = 0;
 	
-	#100000;
+	#1000000;
 	$finish;
 
 end
@@ -130,7 +137,6 @@ end
 //周期触发
 always @(posedge pulse_tic)
 begin
-
 	emit_1trigger(4'b0100,69);
 end
 
@@ -140,28 +146,36 @@ always #2.5 clk_i = ~clk_i;	//	200MHz
 //停止仿真
 initial
 begin
-    #15000 ;//$stop;	//第一组1024点FFT完成
-    #35000 ;//$stop;	//第八组1024点FFT完成
+    // #15000 ;//$stop;	//第一组1024点FFT完成
+    // #35000 ;//$stop;	//第八组1024点FFT完成
+    #450000 
     $fclose(output_file);
-    // $finish;
+    $stop;	//第3组脉冲完成
+	// $finish;
 end
 
 // 文件打开
 initial
 begin
-    output_file = $fopen("..\\..\\source\\Matlab_verify\\FFT_SPEC_out.txt","w");
+    output_file = $fopen("..\\..\\source\\Matlab_verify\\FIFO_out.txt","w");
     if (!output_file)
     begin
-        $display("Could not open \"FFT_SPEC_out.txt\"");
+        $display("Could not open \"FIFO_out.txt\"");
         $stop;
     end
 end
 
-// 将第一个脉冲的功率谱计算结果写入文件
+// 将输出的功率谱计算结果写入文件
+reg output_sign = 0;
 always @(posedge clk_i)
 begin
-    if(uut.Power_Spec_Cal_m.data_valid)
-        $fwrite(output_file,"%d\t%d\n",uut.SPEC_Acc_m.data_index,uut.Power_Spec_Cal_m.Power_Spec);
+   output_sign = uut.FIFO_Buffer_m.rd_en;
+end
+
+always @(posedge clk_i)
+begin
+   if(output_sign)
+       $fwrite(output_file,"%d\n",uut.FIFO_Buffer_m.fifo_dout);
 end
 
 // 【TASK】读出mem中的数据，赋给 x0_i 和 x0z_i
@@ -197,7 +211,7 @@ task serial_data_output;
         loop_i = 0;
         repeat (tics) @ (posedge clk_i)
         begin
-            x0_i = loop_i+1;
+            x0_i  = loop_i+1;
             x0z_i = loop_i+2;
             loop_i = loop_i + 2;
         end

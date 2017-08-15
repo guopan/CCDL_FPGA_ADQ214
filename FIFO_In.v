@@ -1,44 +1,40 @@
 `timescale 1ns / 1ps
-//////////////////////////////////////////////////////////////////////////////////
-// Company:
-// Engineer:
-//
-// Create Date:    10:00:19 07/11/2016
-// Design Name:
-// Module Name:    FIFO_ctrl
-// Project Name:
-// Target Devices:
-// Tool versions:
-// Description:
-//
-// Dependencies:
-//
-// Revision:
-// Revision 0.01 - File Created
-// Additional Comments:
-//
-//////////////////////////////////////////////////////////////////////////////////
+//==============================================================================
+// Copyright (C) 2017 By GUO Pan
+// guopan@bit.edu.cn, All Rights Reserved
+//==============================================================================
+// Module : 	FIFO_in
+// Author : 	GUO Pan
+// Contact : 	guopan@bit.edu.cn
+// Date : 		Jan.10.2017
+//==============================================================================
+// Description :	用于缓冲输入数据，对FFT运算进行补零
+
+//==============================================================================
+
 module FIFO_in
-       #( parameter
-          TOTAL_POINT = 1000,		//单脉冲处理点数的一半（因为2个数据/时钟）
-          RANGEBIN_LENGTH = 250,	//每距离门处理点数
-          NFFT = 1024				//补零后的FFT点数
-        )
+       #( parameter BIT_WIDTH = 14 )
        (
            //Colocking inputs
            input wire rst,
            input wire clk,
 
            //Signal inputs
-           input wire [31:0] data_in,
+           input wire [BIT_WIDTH*2-1:0] data_in,
 
            //Trigger inputs
            input wire start,
 
+           //Parameter inputs
+           input wire [15:0] RANGEBIN_LENGTH,
+           input wire [15:0] TOTAL_POINTS,		//单脉冲处理点数的一半（因为2个数据/时钟）
+           //距离门总数 = TOTAL_POINTS * 2 / RANGEBIN_LENGTH - 1
+
            //Signal outputs
-           output wire [15:0] data_out,
+           output wire [BIT_WIDTH-1:0] data_out,
            output reg  data_valid
        );
+parameter  NFFT = 1024;				//补零后的FFT点数
 
 //Inter reg or wire
 wire rd_clk;
@@ -49,14 +45,13 @@ reg wr_en;
 reg rd_en;
 reg [12:0] wr_counter;		//采样点计数器,FIFO写入点数控制
 // reg [12:0] debug_counter;
-reg [12:0] BinPoint_counter;	//距离门内采样点计数器，FIFO读出补零控制
+reg [10:0] BinPoint_counter;	//距离门内采样点计数器，FIFO读出补零控制
 reg [3:0]  state, next_state;
 
-wire [31:0] din;
-wire [15:0] dout;
+wire [BIT_WIDTH*2-1:0] din;
+wire [BIT_WIDTH-1:0] dout;
 wire fifo_valid;
-reg  wr_counter_en;	//读写计数器的使能信号，由输入start置高，有wr_en的下降沿置低
-reg  wr_en_d;
+reg  wr_counter_en;	//读写计数器的使能信号，由输入start置高，由wr_en的下降沿置低
 
 //补零控制（FIFO读出）状态机，状态定义
 parameter  IDLE = 4'b0001,
@@ -65,19 +60,19 @@ parameter  IDLE = 4'b0001,
            READ_FINISH  = 4'b1000;
 
 //赋值
-assign din = wr_counter_en? data_in : 32'b0;
-assign data_out = fifo_valid? dout : 16'b0;
+assign din = wr_counter_en? data_in : 0;
+assign data_out = fifo_valid? dout : 0;
 assign rd_clk = clk;
 assign wr_clk = clk;
 
 //生成写入计数器的使能信号
 //由start触发其置高
-//由wr_en的下降沿清零
+//由wr_en的下降沿清零（写入了足够的数量）
 always @(posedge clk or posedge rst)
 begin
     if(rst == 1)
         wr_counter_en <= 0;
-    else if(wr_en_d == 1 && wr_en == 0)
+    else if(wr_counter >= TOTAL_POINTS)
         wr_counter_en <= 0;
     else if(start == 1)
         wr_counter_en <= 1;
@@ -90,7 +85,7 @@ always @(posedge clk or posedge rst)
 begin
     if(rst == 1)
         data_valid <= 0;
-    else if(rd_en == 1 && fifo_valid == 0)	//rd_en的上升沿置高
+    else if(rd_en == 1 && fifo_valid == 0)	// rd_en的上升沿置高
         data_valid <= 1;
     else if(state == IDLE)
         data_valid <= 0;
@@ -125,25 +120,19 @@ end
 // end
 
 //生成FIFO写入控制信号wr_en
+//一次写入两个点，所以RANGEBIN_LENGTH需要除2
 always @(posedge clk or posedge rst)
 begin
     if(rst == 1)
         wr_en <= 0;
     else if(wr_counter_en == 0)
         wr_en <= 0;
-    else if(wr_counter >= TOTAL_POINT)
+    else if(wr_counter >= TOTAL_POINTS)
         wr_en <= 0;
+    else if(wr_counter >= RANGEBIN_LENGTH/2 && wr_counter < RANGEBIN_LENGTH)
+        wr_en <= 0;		// 1到2距离门之间，即噪声与镜面反射的空隙，不需要处理
     else
         wr_en <= 1;
-end
-
-//延迟wr_en信号1个clk，得到wr_en_d
-always @(posedge clk or posedge rst)
-begin
-    if(rst == 1)
-        wr_en_d <= 0;
-    else
-        wr_en_d <= wr_en;
 end
 
 //读控制计数循环
@@ -161,6 +150,9 @@ begin
         BinPoint_counter <= BinPoint_counter + 1;
 end
 
+////////////////////////////////////////////////
+// 状态机，控制FIFO的读出
+////////////////////////////////////////////////
 always @(posedge clk or posedge rst)
 begin
     if(rst == 1)
@@ -248,25 +240,25 @@ begin
 end
 
 //FIFO IN IP
-//输入位宽32bit，输出位宽16bit，写入深度4096。读写时钟同步。
-//深度2048就够了
+//输入位宽28bit，输出位宽14bit，写入深度2048。读写时钟同步。
+//可容纳4096点，对于16个距离门来说，最大需要250*16=4000个点
 fifo_Buffer_in Fifo_Buffer_in_m (
-                        .rst(rst), // input rst
-                        .wr_clk(wr_clk), // input wr_clk
-                        .rd_clk(rd_clk), // input rd_clk
-                        .din(din), // input [31 : 0] din
-                        .wr_en(wr_en), // input wr_en
-                        .rd_en(rd_en), // input rd_en
-                        .dout(dout), // output [15 : 0] dout
-                        .full(full), // output full
-                        // .almost_full(almost_full), // output almost_full
-                        // .wr_ack(wr_ack), // output wr_ack
-                        // .overflow(overflow), // output overflow
-                        .empty(empty), // output empty
-                        // .almost_empty(almost_empty), // output almost_empty
-                        .valid(fifo_valid) // output valid
-                        // .underflow(underflow), // output underflow
-                        // .rd_data_count(rd_data_count) // output [9 : 0] rd_data_count
-                    );
+                   .rst(rst), // input rst
+                   .wr_clk(wr_clk), // input wr_clk
+                   .rd_clk(rd_clk), // input rd_clk
+                   .din(din), // input [BIT_WIDTH*2-1 : 0] din
+                   .wr_en(wr_en), // input wr_en
+                   .rd_en(rd_en), // input rd_en
+                   .dout(dout), // output [BIT_WIDTH-1 : 0] dout
+                   .full(full), // output full
+                   // .almost_full(almost_full), // output almost_full
+                   // .wr_ack(wr_ack), // output wr_ack
+                   // .overflow(overflow), // output overflow
+                   .empty(empty), // output empty
+                   // .almost_empty(almost_empty), // output almost_empty
+                   .valid(fifo_valid) // output valid
+                   // .underflow(underflow), // output underflow
+                   // .rd_data_count(rd_data_count) // output [9 : 0] rd_data_count
+               );
 
 endmodule
