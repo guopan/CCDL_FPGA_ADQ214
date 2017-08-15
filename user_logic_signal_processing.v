@@ -153,7 +153,7 @@ FIFO_in FIFO_in_m (
             .data_in(fifo_tc_dataout),
             .start(trigger_start),
 			.RANGEBIN_LENGTH(UR_nPoints_RB),
-			.TOTAL_POINTS({1'b0,UR_nTotalPoins[15:1]}),	
+			.TOTAL_POINTS(UR_nTotalPoins),	
             .data_out(fifo_in_data_out),
             .data_valid(fifo_in_valid)
         );

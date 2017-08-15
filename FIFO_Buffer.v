@@ -38,7 +38,9 @@ reg  [0:2] valid_in_reg;
 ////////////////////////////////////////////////////////////////////////////////
 always @(posedge clk or posedge rst)
 begin
-    if(rst == 1 || Buffer_En == 0)
+    if(rst == 1'b1)
+        wr_en <= 0;
+    else if(Buffer_En == 0)
         wr_en <= 0;
     else
         wr_en <= valid_in_reg[2];
@@ -83,7 +85,9 @@ end
 // 累加过程_DPRAM
 always @(posedge clk or posedge rst)
 begin
-    if(rst == 1 || Buffer_En == 0)
+    if(rst == 1)
+        fifo_din <= 0;
+    else if(Buffer_En == 0)
         fifo_din <= 0;
     else if(is_first_pls)
         fifo_din <= {14'd0, data_in};
@@ -118,7 +122,12 @@ end
 // 生成 valid_out 信号
 always @(posedge clk or posedge rst)
 begin
-    if(rst == 1 || Buffer_En == 1)
+    if(rst == 1)
+    begin
+        rd_en_reg <= 0;
+        valid_out <= 0;
+    end
+    else if(Buffer_En == 1)
     begin
         rd_en_reg <= 0;
         valid_out <= 0;
