@@ -1,23 +1,17 @@
 `timescale 1ns / 1ps
-//////////////////////////////////////////////////////////////////////////////////
-// Company: 
-// Engineer: 
-// 
-// Create Date:    13:49:38 08/12/2016 
-// Design Name: 
-// Module Name:    Trigger_Counter 
-// Project Name: 
-// Target Devices: 
-// Tool versions: 
-// Description: 
-//
-// Dependencies: 
-//
-// Revision: 
-// Revision 0.01 - File Created
-// Additional Comments: 
-//
-//////////////////////////////////////////////////////////////////////////////////
+//==============================================================================
+// Copyright (C) 2017 By GUO Pan
+// guopan@bit.edu.cn, All Rights Reserved
+//==============================================================================
+// Module : 	Pulse_Counter
+// Author : 	GUO Pan
+// Contact : 	guopan@bit.edu.cn
+// Date : 		Aug.8.2016
+//==============================================================================
+// Description :	对脉冲进行计数，Pulse_counts
+// 					PSC模块的datavalid结束时，计数加一。
+// 					首个脉冲时，Pulse_counts为0，输出is_first_pls信号
+//==============================================================================
 module Pulse_Counter(
     input wire clk,
     input wire rst,
@@ -29,7 +23,7 @@ module Pulse_Counter(
     );
 	
 	wire dv_posedge;	// data_valid_i 的上升沿标志
-	reg dv_negedge;	// data_valid_i 的下降沿110标志
+	reg dv_negedge;	// data_valid_i 的下降沿100标志
 	
 	reg dvi_reg[1:0];
 	
@@ -56,8 +50,6 @@ always @(posedge clk or posedge rst)
         dvi_reg[1] <= dvi_reg[0];
 		dv_negedge <= dvi_reg[1] & ~dvi_reg[0] & ~data_valid_i;
     end
-	
-	
 	
 // 脉冲计数器
 // 输出的Pulse_counts，在输入信号data_valid_i有效2个clk之后，更新计数值
