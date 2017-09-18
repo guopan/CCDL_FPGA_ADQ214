@@ -69,8 +69,8 @@ user_logic_signal_processing uut (
                                  .trigger_vector_i(trigger_vector_i),
                                  .y0_o(y0_o),
                                  .y0z_o(y0z_o),
-                                 .y1_o(),
-                                 .y1z_o(),
+                                 .y1_o(y1_o),
+                                 .y1z_o(y1z_o),
                                  .trigger_vector_o(trigger_vector_o),
                                  .data_valid_o(data_valid_o),
                                  .user_register_i(user_register_i),
@@ -166,11 +166,14 @@ begin
 end
 
 // 将输出的功率谱计算结果写入文件
-reg output_sign = 0;
-always @(posedge clk_i)
-begin
-   output_sign = uut.FIFO_Buffer_m.rd_en;
-end
+
+// reg output_sign = 0;
+// always @(posedge clk_i)
+// begin
+   // output_sign = uut.FIFO_Buffer_m.rd_en;
+// end
+
+wire output_sign = uut.FIFO_Buffer_m.rd_en;
 
 always @(posedge clk_i)
 begin

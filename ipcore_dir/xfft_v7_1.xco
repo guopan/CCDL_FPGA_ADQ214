@@ -1,7 +1,7 @@
 ##############################################################
 #
 # Xilinx Core Generator version 14.7
-# Date: Thu Aug 03 08:18:55 2017
+# Date: Sat Sep 16 06:45:06 2017
 #
 ##############################################################
 #
@@ -54,7 +54,7 @@ CSET memory_options_hybrid=false
 CSET memory_options_phase_factors=block_ram
 CSET memory_options_reorder=block_ram
 CSET number_of_stages_using_block_ram_for_data_and_phase_factors=3
-CSET output_ordering=bit_reversed_order
+CSET output_ordering=natural_order
 CSET ovflo=false
 CSET phase_factor_width=24
 CSET rounding_modes=convergent_rounding
@@ -69,4 +69,4 @@ CSET transform_length=1024
 MISC pkg_timestamp=2012-08-28T14:48:07Z
 # END Extra information
 GENERATE
-# CRC: 39eec97a
+# CRC:  126be05

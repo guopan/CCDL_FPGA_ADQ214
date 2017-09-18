@@ -25,7 +25,8 @@ module Power_Spec_Cal(
 
            //Signal output
            output reg [49:0] Power_Spec,		// 功率谱计算结果
-           output reg data_valid				// 比真正的datavalid早3个时钟，补偿后续FIFO的读出+写入
+           output reg data_valid,				// 比真正的datavalid早3个时钟，补偿后续FIFO的读出+写入
+           output reg dv_FFT					// 连续的dv输出，其下降沿用于判断脉冲计数
        );
 
 //Inter wire or reg
@@ -131,5 +132,20 @@ begin
         dv_reg[2] <= dv_reg[1];
     end
 end
+
+//缓冲FFT模块的dv信号
+always @(posedge clk or posedge rst)
+begin
+    if(rst == 1)
+    begin
+        dv_FFT <= 0;
+    end
+    else
+    begin
+        dv_FFT <= dv;
+    end
+end
+
+
 
 endmodule

@@ -22,33 +22,39 @@ module Pulse_Counter(
 	
     );
 	
-	wire dv_posedge;	// data_valid_i 的上升沿标志
-	reg dv_negedge;	// data_valid_i 的下降沿100标志
+	// wire dv_posedge;	// data_valid_i 的上升沿标志
+	wire dv_negedge;		// data_valid_i 的下降沿标志
 	
-	reg dvi_reg[1:0];
+	reg dvn_reg[5:0];
 	
 // 将输入信号 data_valid_i 转换为单脉冲(即上升沿检测)
-Posedge_detector pos_edge_dvi
+Negedge_detector pos_edge_dvi
  (
     .clk(clk), 
     .rst(rst), 
     .signal_in(data_valid_i), 
-    .pulse_out(dv_posedge)
+    .pulse_out(dv_negedge)
     );
 
-//延迟signal_in信号1个clk，得到signal_in_d
+//延迟dv_FFT信号5个clk，补偿FIFO的读写延迟，再用于计数
 always @(posedge clk or posedge rst)
     if(rst == 1)
     begin
-        dvi_reg[0] <= 0;
-        dvi_reg[1] <= 0;
-        dv_negedge <= 0;
+        dvn_reg[0] <= 0;
+        dvn_reg[1] <= 0;
+        dvn_reg[2] <= 0;
+        dvn_reg[3] <= 0;
+        dvn_reg[4] <= 0;
+        dvn_reg[5] <= 0;
     end
     else
     begin
-        dvi_reg[0] <= data_valid_i;
-        dvi_reg[1] <= dvi_reg[0];
-		dv_negedge <= dvi_reg[1] & ~dvi_reg[0] & ~data_valid_i;
+        dvn_reg[0] <= dv_negedge;
+        dvn_reg[1] <= dvn_reg[0];
+        dvn_reg[2] <= dvn_reg[1];
+        dvn_reg[3] <= dvn_reg[2];
+        dvn_reg[4] <= dvn_reg[3];
+        dvn_reg[5] <= dvn_reg[4];
     end
 	
 // 脉冲计数器
@@ -61,7 +67,7 @@ begin
     end
     else if(Capture_En == 0)
         Pulse_counts <= 0;
-    else if(dv_negedge == 1)
+    else if(dvn_reg[5] == 1)
         Pulse_counts <= Pulse_counts + 1;
     else
         Pulse_counts <= Pulse_counts;

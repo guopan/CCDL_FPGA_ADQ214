@@ -49,7 +49,7 @@ module user_logic_signal_processing
        );
 parameter BIT_WIDTH = 14;
 
-// ç”µå¹³è§¦å‘ä¿¡å·ç”Ÿæˆ
+// µçÆ½´¥·¢ĞÅºÅÉú³É
 reg [15:0] Trigger_Level = 16'd500;
 wire trigger_start;
 wire [1:0] trigger_vector;
@@ -60,18 +60,19 @@ wire trigger_ready;
 wire [BIT_WIDTH-1 : 0] fifo_in_data_out;
 wire fifo_in_valid;
 
-// åŠŸç‡è°±è®¡ç®—
+// ¹¦ÂÊÆ×¼ÆËã
 wire [49:0] Power_Spec;
 wire data_valid_PSC;
+wire dv_FFT;
 
-// åŠŸç‡è°±ç´¯åŠ ç¼“å†²
+// ¹¦ÂÊÆ×ÀÛ¼Ó»º³å
 wire is_first_pls;
 wire [63:0] FIFO_Buffer_data_out;
 
-// è„‰å†²è®¡æ•°å™¨
+// Âö³å¼ÆÊıÆ÷
 wire [15:0] Pulse_counts;
 
-// åˆ†ç»„æ§åˆ¶
+// ·Ö×é¿ØÖÆ
 wire Capture_En;
 
 // SPI_CMD
@@ -84,7 +85,7 @@ wire [15:0] UR_nACC_Pulses;
 wire [15:0] UR_TriggerLevel;
 wire [15:0] UR_CMD;
 
-// æ¨¡å—è¾“å‡º
+// Ä£¿éÊä³ö
 reg [NofBits-1:0] y0_out;
 reg [NofBits-1:0] y0z_out;
 reg [NofBits-1:0] y1_out;
@@ -120,7 +121,7 @@ assign user_register_o[1*16-1:0*16] = UR_CMD;
 // UR_nRangeBins;
 
 
-// Trigger ç”Ÿæˆæ¨¡å—ã€‚è¾“å‡ºè§¦å‘å¼€å§‹ä¿¡å·ã€‚
+// Trigger Éú³ÉÄ£¿é¡£Êä³ö´¥·¢¿ªÊ¼ĞÅºÅ¡£
 Trigger_Generator Trigger_Generator_m (
                       .clk(clk_i),
                       .rst(rst_i),
@@ -133,7 +134,7 @@ Trigger_Generator Trigger_Generator_m (
                       .trigger_vector(trigger_vector)
                   );
 
-// FIFO_TC æ¨¡å—ã€‚å†™å…¥æ·±åº¦1024ï¼Œè¾“å…¥ä½å®½32bitï¼Œè¾“å‡ºä½å®½32bitï¼Œè¯»å†™æ—¶é’ŸåŒæ­¥ã€‚
+// FIFO_TC Ä£¿é¡£Ğ´ÈëÉî¶È1024£¬ÊäÈëÎ»¿í32bit£¬Êä³öÎ»¿í32bit£¬¶ÁĞ´Ê±ÖÓÍ¬²½¡£
 FIFO_TC FIFO_TC_m (
             .clk(clk_i),
             .rst(rst_i),
@@ -143,10 +144,10 @@ FIFO_TC FIFO_TC_m (
             .trigger_tc_ready(trigger_ready)
         );
 
-// FIFO_IN æ¨¡å—
-// è¾“å…¥ä½å®½28bitï¼Œè¾“å‡ºä½å®½14bitï¼Œå†™å…¥æ·±åº¦2048@28bitã€‚è¯»å†™æ—¶é’ŸåŒæ­¥ã€‚
-// æ¯ä¸ªè·ç¦»é—¨ï¼Œè¯»å‡º UR_nPoints_RB ä¸ªç‚¹åè¾“å‡ºè¡¥é›¶ã€‚
-// ç”±äºè¾“å‡ºä½å®½æŠ˜åŠï¼Œæ‰€ä»¥TOTAL_POINTS = UR_nTotalPoins/2
+// FIFO_IN Ä£¿é
+// ÊäÈëÎ»¿í28bit£¬Êä³öÎ»¿í14bit£¬Ğ´ÈëÉî¶È2048@28bit¡£¶ÁĞ´Ê±ÖÓÍ¬²½¡£
+// Ã¿¸ö¾àÀëÃÅ£¬¶Á³ö UR_nPoints_RB ¸öµãºóÊä³ö²¹Áã¡£
+// ÓÉÓÚÊä³öÎ»¿íÕÛ°ë£¬ËùÒÔTOTAL_POINTS = UR_nTotalPoins/2
 FIFO_in FIFO_in_m (
             .rst(rst_i),
             .clk(clk_i),
@@ -158,27 +159,28 @@ FIFO_in FIFO_in_m (
             .data_valid(fifo_in_valid)
         );
 
-// è„‰å†²è®¡æ•°å™¨
+// Âö³å¼ÆÊıÆ÷
 Pulse_Counter Pulse_Counter_m (
                   .clk(clk_i),
                   .rst(rst_i),
-                  .data_valid_i(data_valid_PSC),
+                  .data_valid_i(dv_FFT),
                   .Capture_En(Capture_En),
                   .Pulse_counts(Pulse_counts),
 				  .is_first_pls(is_first_pls)
               );
 
-// åŠŸç‡è°±è®¡ç®—æ¨¡å—ï¼Œè®¡ç®—1024ç‚¹FFTï¼ŒåŠå…¶åŠŸç‡è°±ã€‚
+// ¹¦ÂÊÆ×¼ÆËãÄ£¿é£¬¼ÆËã1024µãFFT£¬¼°Æä¹¦ÂÊÆ×¡£
 Power_Spec_Cal Power_Spec_Cal_m (
                    .clk(clk_i),
                    .rst(rst_i),
                    .fft_start(fifo_in_valid),
                    .fifo_data(fifo_in_data_out),
                    .Power_Spec(Power_Spec),
-                   .data_valid(data_valid_PSC)
+                   .data_valid(data_valid_PSC),
+                   .dv_FFT(dv_FFT)
                );
 
-// åŠŸç‡è°±ç´¯åŠ ç¼“å†²Buffer
+// ¹¦ÂÊÆ×ÀÛ¼Ó»º³åBuffer
 FIFO_Buffer FIFO_Buffer_m (
     .clk(clk_i), 
     .rst(rst_i), 
@@ -190,7 +192,7 @@ FIFO_Buffer FIFO_Buffer_m (
     .valid_out(data_valid_o)
     );
 
-// è„‰å†²é‡‡é›†åˆ†ç»„æ§åˆ¶
+// Âö³å²É¼¯·Ö×é¿ØÖÆ
 Group_Ctrl Group_Ctrl_m (
     .clk(clk_i), 
     .rst(rst_i), 
@@ -200,7 +202,7 @@ Group_Ctrl Group_Ctrl_m (
     .Capture_En(Capture_En)
     );
 
-//æ¥æ”¶ä¸Šä½æœºçš„SPIå‘½ä»¤
+//½ÓÊÕÉÏÎ»»úµÄSPIÃüÁî
 SPI_CMD SPI_CMD_m (
     .clk(clk_i), 
     .rst(rst_i), 
@@ -216,7 +218,7 @@ SPI_CMD SPI_CMD_m (
     .UR_CMD(UR_CMD)
     );
 
-//å¯¹æ¨¡å—è¾“å‡ºy0_outå’Œy0z_outèµ‹å€¼
+//¶ÔÄ£¿éÊä³öy0_outºÍy0z_out¸³Öµ
 always @ (posedge clk_i or posedge rst_i)
 begin:CHANNELA_OUTPUT
     if(rst_i == 1)
@@ -231,7 +233,7 @@ begin:CHANNELA_OUTPUT
     end
 end
 
-//å¯¹æ¨¡å—è¾“å‡ºy1_outå’Œy1z_outèµ‹å€¼
+//¶ÔÄ£¿éÊä³öy1_outºÍy1z_out¸³Öµ
 always @ (posedge clk_i or posedge rst_i)
 begin:CHANNELB_OUTPUT
     if(rst_i == 1)
