@@ -37,12 +37,12 @@ wire [15:0] ul_partnum_3_o;
 wire [15:0] ul_partnum_rev_o;
 
 // 上位机命令定义
-reg [15:0] UR_nTotalPoins = 2000;
+reg [15:0] UR_nTotalPoins = 1500;
 reg [15:0] UR_HighLim_Spec = 0;
 reg [15:0] UR_LowLim_Spec = 0;
-reg [15:0] UR_nRangeBins = 8;
+reg [15:0] UR_nRangeBins = 6;
 reg [15:0] UR_nPoints_RB = 250;
-reg [15:0] UR_nACC_Pulses = 3;
+reg [15:0] UR_nACC_Pulses = 2;
 reg [15:0] UR_TriggerLevel = 500;
 reg [15:0] UR_CMD = 0;
 
@@ -92,7 +92,7 @@ initial begin
 	pulse_tic = 0;
 	repeat(100) @ (posedge clk_i);	//初始延迟
 	pulse_tic = 1;
-	forever # 50000 pulse_tic = ~ pulse_tic;
+	forever # 50000 pulse_tic = ~ pulse_tic;		// 100000ns = 100us =>10kHz
 end
 
 // 主要测试激励
@@ -100,9 +100,9 @@ initial begin
     // Initialize Inputs
     clk_i = 1;
     rst_i = 1;
-    x0_i = 0;
+    x0_i  = 0;
     x0z_i = 0;
-    x1_i = 0;
+    x1_i  = 0;
     x1z_i = 0;
     trigger_vector_i = 0;
 	
@@ -148,9 +148,9 @@ initial
 begin
     // #15000 ;//$stop;	//第一组1024点FFT完成
     // #35000 ;//$stop;	//第八组1024点FFT完成
-    #450000 
+    #450000 	//第3组脉冲完成
     $fclose(output_file);
-    $stop;	//第3组脉冲完成
+    $stop;
 	// $finish;
 end
 
@@ -183,7 +183,7 @@ end
 
 // 【TASK】读出mem中的数据，赋给 x0_i 和 x0z_i
 task mem_data_output;
-    input [31:0] tics;			// 读出数据的数量，不超过4000的一半
+    input [31:0] tics;			// 读出数据的tic数量，不超过4000的一半
     begin
         loop_i = 0;
         repeat (tics) @ (posedge clk_i)

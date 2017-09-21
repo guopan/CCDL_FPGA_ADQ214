@@ -9,17 +9,21 @@
 // Date : 		Jan.10.2017
 //==============================================================================
 // Description :	利用FIFO进行功率谱累加
+// Records ：		Trigger_start上升沿，到valid_in上升沿延迟13520ns = 2704个clk
 //==============================================================================
 
 module FIFO_Buffer(
            input clk,
            input rst,
            input [49:0] data_in,
+		   input trigger_start,
            input is_first_pls,
            input valid_in,
            input Buffer_En,			// 为高时累加缓冲，为低时输出结果
+		   input upload_trigger,
 
            output reg [63:0] data_out,
+		   output reg Upload_En,	// 使能外部上传控制用的Trigger_Generator
            output reg valid_out
        );
 
@@ -31,6 +35,8 @@ wire [63 : 0] fifo_dout;
 wire empty, full, almost_empty;
 
 reg  [0:2] valid_in_reg;
+
+reg  [15:0] Counter;
 
 ////////////////////////////////////////////////////////////////////////////////
 // 生成FIFO写入控制信号wr_en
@@ -75,7 +81,8 @@ begin
     if(rst == 1)
         rd_en <= 0;
     else if(Buffer_En == 0)
-        rd_en <= ~almost_empty;
+        // rd_en <= ~almost_empty;
+        rd_en <= (Counter < 2048)&~almost_empty;
     else if(is_first_pls)
         rd_en <= 0;
     else
@@ -138,4 +145,31 @@ begin
         valid_out <= rd_en_reg;
     end
 end
+
+// 生成上传的使能信号Upload_En
+always @(posedge clk or posedge rst)
+begin
+    if(rst == 1)
+        Upload_En <= 0;
+    else if(Buffer_En == 0)
+        Upload_En <= ~almost_empty;
+end
+
+// Trigger后的512计数器
+// 当Upload_En为高时
+// trigger_start开始后，产生一个2048个clk的高电平
+always @(posedge clk or posedge rst)
+begin
+    if(rst == 1)
+        Counter <= 2048;
+    else if(Upload_En == 0)
+        Counter <= 2048;
+    else if(trigger_start)
+        Counter <= 0;
+	else if(Counter < 2048)
+        Counter <= Counter + 1;
+    else
+        Counter <= 2048;
+end
+
 endmodule

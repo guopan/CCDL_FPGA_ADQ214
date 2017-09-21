@@ -72,6 +72,9 @@ wire [63:0] FIFO_Buffer_data_out;
 // 脉冲计数器
 wire [15:0] Pulse_counts;
 
+// 上传控制
+wire Upload_En;
+
 // 分组控制
 wire Capture_En;
 
@@ -125,7 +128,7 @@ assign user_register_o[1*16-1:0*16] = UR_CMD;
 Trigger_Generator Trigger_Generator_m (
                       .clk(clk_i),
                       .rst(rst_i),
-                      .Capture_En(Capture_En),
+                      .Capture_En(Capture_En|Upload_En),
                       .Trigger_Ready(trigger_ready),
                       .Trigger_Level(UR_TriggerLevel),
                       .x0_i(x0_i),
@@ -185,10 +188,13 @@ FIFO_Buffer FIFO_Buffer_m (
     .clk(clk_i), 
     .rst(rst_i), 
     .data_in(Power_Spec), 
+	.trigger_start(trigger_start),
     .is_first_pls(is_first_pls), 
     .valid_in(data_valid_PSC), 
     .Buffer_En(Capture_En), 
+	.upload_trigger(trigger_start),
     .data_out(FIFO_Buffer_data_out), 
+	.Upload_En(Upload_En),
     .valid_out(data_valid_o)
     );
 
@@ -202,6 +208,7 @@ Group_Ctrl Group_Ctrl_m (
     .Capture_En(Capture_En)
     );
 
+	
 //接收上位机的SPI命令
 SPI_CMD SPI_CMD_m (
     .clk(clk_i), 
