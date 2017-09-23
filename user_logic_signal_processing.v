@@ -79,8 +79,8 @@ wire Upload_En;
 wire Capture_En;
 
 // SPI_CMD
-wire [15:0] UR_nTotalPoins;
-wire [15:0] UR_HighLim_Spec;
+wire [15:0] UR_EndPosition;
+wire [15:0] UR_MirrorStart;
 wire [15:0] UR_LowLim_Spec;
 wire [15:0] UR_nRangeBins;
 wire [15:0] UR_nPoints_RB;
@@ -156,12 +156,13 @@ FIFO_in FIFO_in_m (
             .clk(clk_i),
             .data_in(fifo_tc_dataout),
             .start(trigger_start),
-			.RANGEBIN_LENGTH(UR_nPoints_RB),
-			.TOTAL_POINTS(UR_nTotalPoins),	
+			.nPointsPerBin(UR_nPoints_RB),
+			.Mirror_Position(UR_MirrorStart),
+			.End_Position(UR_EndPosition),	
             .data_out(fifo_in_data_out),
             .data_valid(fifo_in_valid)
         );
-
+		
 // 脉冲计数器
 Pulse_Counter Pulse_Counter_m (
                   .clk(clk_i),
@@ -215,8 +216,8 @@ SPI_CMD SPI_CMD_m (
     .rst(rst_i), 
     .CMD_Update_Disable(Capture_En), 
     .user_register_i(user_register_i), 
-    .UR_nTotalPoins(UR_nTotalPoins), 
-    .UR_HighLim_Spec(UR_HighLim_Spec), 
+    .UR_EndPosition(UR_EndPosition), 
+    .UR_MirrorStart(UR_MirrorStart), 
     .UR_LowLim_Spec(UR_LowLim_Spec), 
     .UR_nRangeBins(UR_nRangeBins), 
     .UR_nPoints_RB(UR_nPoints_RB), 
@@ -225,6 +226,7 @@ SPI_CMD SPI_CMD_m (
     .UR_CMD(UR_CMD)
     );
 
+	
 //对模块输出y0_out和y0z_out赋值
 always @ (posedge clk_i or posedge rst_i)
 begin:CHANNELA_OUTPUT

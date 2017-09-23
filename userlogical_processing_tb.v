@@ -37,8 +37,8 @@ wire [15:0] ul_partnum_3_o;
 wire [15:0] ul_partnum_rev_o;
 
 // 上位机命令定义
-reg [15:0] UR_nTotalPoins = 1500;
-reg [15:0] UR_HighLim_Spec = 0;
+reg [15:0] UR_EndPosition = 1400;
+reg [15:0] UR_MirrorStart = 400;
 reg [15:0] UR_LowLim_Spec = 0;
 reg [15:0] UR_nRangeBins = 6;
 reg [15:0] UR_nPoints_RB = 250;
@@ -46,8 +46,8 @@ reg [15:0] UR_nACC_Pulses = 2;
 reg [15:0] UR_TriggerLevel = 500;
 reg [15:0] UR_CMD = 0;
 
-assign user_register_i[8*16-1:7*16] = UR_nTotalPoins;
-assign user_register_i[7*16-1:6*16] = UR_HighLim_Spec;
+assign user_register_i[8*16-1:7*16] = UR_EndPosition;
+assign user_register_i[7*16-1:6*16] = UR_MirrorStart;
 assign user_register_i[6*16-1:5*16] = UR_LowLim_Spec;
 assign user_register_i[5*16-1:4*16] = UR_nRangeBins;
 assign user_register_i[4*16-1:3*16] = UR_nPoints_RB;
