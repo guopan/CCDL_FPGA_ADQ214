@@ -20,7 +20,6 @@ module FIFO_Buffer(
            input is_first_pls,
            input valid_in,
            input Buffer_En,			// 为高时累加缓冲，为低时输出结果
-		   input upload_trigger,
 
            output reg [63:0] data_out,
 		   output reg Upload_En,	// 使能外部上传控制用的Trigger_Generator

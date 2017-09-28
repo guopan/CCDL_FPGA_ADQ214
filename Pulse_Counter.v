@@ -27,8 +27,8 @@ module Pulse_Counter(
 	
 	reg dvn_reg[5:0];
 	
-// 将输入信号 data_valid_i 转换为单脉冲(即上升沿检测)
-Negedge_detector pos_edge_dvi
+// 将输入信号 data_valid_i 转换为单脉冲(即下降沿检测)
+Negedge_detector neg_edge_dvi
  (
     .clk(clk), 
     .rst(rst), 
@@ -84,7 +84,7 @@ begin
     else if(Capture_En == 0)
         is_first_pls <= 0;
     else
-        is_first_pls <= (Pulse_counts==16'd0);
+        is_first_pls <= (Pulse_counts == 16'd0);
 end
 
 

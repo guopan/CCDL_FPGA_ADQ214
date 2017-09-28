@@ -35,7 +35,7 @@ module user_logic_signal_processing
            output wire [3:0]                          trigger_vector_o,
 
            // Data_valid
-           output wire data_valid_o,
+           output wire 								   data_valid_o,
 
            //User registers
            input wire [16*8-1:0]                      user_register_i,
@@ -58,30 +58,47 @@ wire [BIT_WIDTH*2-1:0] fifo_tc_dataout;
 wire trigger_ready;
 // FIFO_IN
 wire [BIT_WIDTH-1 : 0] fifo_in_data_out;
-wire fifo_in_valid;
+wire fifo_in_valid, fifo_valid_to_overlap;
+
+// FIFO_IN_OVERLAP
+wire [BIT_WIDTH-1 : 0] fifo_in_overlap_data_out;
+wire fifo_in_overlap_valid;
 
 // 功率谱计算
-wire [49:0] Power_Spec;
-wire data_valid_PSC;
-wire dv_FFT;
+wire [49:0] Power_Spec_1;
+wire [49:0] Power_Spec_2;
+wire data_valid_PSC_1;
+wire data_valid_PSC_2;
+wire dv_FFT_1;
+wire dv_FFT_2;
 
 // 功率谱累加缓冲
 wire is_first_pls;
-wire [63:0] FIFO_Buffer_data_out;
+wire [63:0] FIFO_Buffer_data_out_1;
+wire [63:0] FIFO_Buffer_data_out_2;
+wire data_valid_o1;
+wire data_valid_o2;
 
 // 脉冲计数器
 wire [15:0] Pulse_counts;
 
 // 上传控制
-wire Upload_En;
+wire Upload_En_1;
+wire Upload_En_2;
 
 // 分组控制
 wire Capture_En;
 
+// 上传切换控制
+wire trigger_start_1;
+wire trigger_start_2;
+wire [63:0] data_out;
+
+
 // SPI_CMD
 wire [15:0] UR_EndPosition;
 wire [15:0] UR_MirrorStart;
-wire [15:0] UR_LowLim_Spec;
+wire [15:0] UR_nOverlap;
 wire [15:0] UR_nRangeBins;
 wire [15:0] UR_nPoints_RB;
 wire [15:0] UR_nACC_Pulses;
@@ -123,12 +140,11 @@ assign user_register_o[1*16-1:0*16] = UR_CMD;
 // UR_LowLim_Spec;
 // UR_nRangeBins;
 
-
 // Trigger 生成模块。输出触发开始信号。
 Trigger_Generator Trigger_Generator_m (
                       .clk(clk_i),
                       .rst(rst_i),
-                      .Capture_En(Capture_En|Upload_En),
+                      .Capture_En(Capture_En|Upload_En_1|Upload_En_2),
                       .Trigger_Ready(trigger_ready),
                       .Trigger_Level(UR_TriggerLevel),
                       .x0_i(x0_i),
@@ -155,48 +171,89 @@ FIFO_in FIFO_in_m (
             .rst(rst_i),
             .clk(clk_i),
             .data_in(fifo_tc_dataout),
-            .start(trigger_start),
+            .start(trigger_start & Capture_En),
 			.nPointsPerBin(UR_nPoints_RB),
 			.Mirror_Position(UR_MirrorStart),
 			.End_Position(UR_EndPosition),	
             .data_out(fifo_in_data_out),
-            .data_valid(fifo_in_valid)
+            .data_valid(fifo_in_valid),
+			.fifo_valid(fifo_valid_to_overlap)
+        );
+		
+// FIFO_IN_Overlap 模块
+// 输入位宽14bit，输出位宽14bit，写入深度1024@14bit。读写时钟同步。
+// 每个距离门，读出 UR_nPoints_RB 个点后输出补零。
+// 由于输出位宽折半，所以TOTAL_POINTS = UR_nTotalPoins/2
+FIFO_in_Overlap FIFO_in_overlap_m (
+            .rst(rst_i),
+            .clk(clk_i),
+            .data_in(fifo_in_data_out),
+            .start(trigger_start & Capture_En),
+            .fifo_valid_in(fifo_valid_to_overlap),
+			.nPointsPerBin(UR_nPoints_RB),
+			.nPoints_Overlap(UR_nOverlap),
+            .data_out(fifo_in_overlap_data_out),
+            .data_valid(fifo_in_overlap_valid)
         );
 		
 // 脉冲计数器
 Pulse_Counter Pulse_Counter_m (
                   .clk(clk_i),
                   .rst(rst_i),
-                  .data_valid_i(dv_FFT),
+                  .data_valid_i(dv_FFT_1|dv_FFT_2),
                   .Capture_En(Capture_En),
                   .Pulse_counts(Pulse_counts),
 				  .is_first_pls(is_first_pls)
               );
 
-// 功率谱计算模块，计算1024点FFT，及其功率谱。
-Power_Spec_Cal Power_Spec_Cal_m (
+// 功率谱计算模块1，计算1024点FFT，及其功率谱。
+Power_Spec_Cal Power_Spec_Cal_m1 (
                    .clk(clk_i),
                    .rst(rst_i),
                    .fft_start(fifo_in_valid),
                    .fifo_data(fifo_in_data_out),
-                   .Power_Spec(Power_Spec),
-                   .data_valid(data_valid_PSC),
-                   .dv_FFT(dv_FFT)
+                   .Power_Spec(Power_Spec_1),
+                   .data_valid(data_valid_PSC_1),
+                   .dv_FFT(dv_FFT_1)
                );
 
-// 功率谱累加缓冲Buffer
-FIFO_Buffer FIFO_Buffer_m (
+// 功率谱计算模块2，计算1024点FFT，及其功率谱。
+Power_Spec_Cal Power_Spec_Cal_m2 (
+                   .clk(clk_i),
+                   .rst(rst_i),
+                   .fft_start(fifo_in_overlap_valid),
+                   .fifo_data(fifo_in_overlap_data_out),
+                   .Power_Spec(Power_Spec_2),
+                   .data_valid(data_valid_PSC_2),
+                   .dv_FFT(dv_FFT_2)
+               );
+
+// 功率谱累加缓冲Buffer	1
+FIFO_Buffer FIFO_Buffer_m1 (
     .clk(clk_i), 
     .rst(rst_i), 
-    .data_in(Power_Spec), 
-	.trigger_start(trigger_start),
+    .data_in(Power_Spec_1), 
+	.trigger_start(trigger_start_1),
     .is_first_pls(is_first_pls), 
-    .valid_in(data_valid_PSC), 
+    .valid_in(data_valid_PSC_1), 
     .Buffer_En(Capture_En), 
-	.upload_trigger(trigger_start),
-    .data_out(FIFO_Buffer_data_out), 
-	.Upload_En(Upload_En),
-    .valid_out(data_valid_o)
+    .data_out(FIFO_Buffer_data_out_1), 
+	.Upload_En(Upload_En_1),
+    .valid_out(data_valid_o1)
+    );
+	
+// 功率谱累加缓冲Buffer	2
+FIFO_Buffer FIFO_Buffer_m2 (
+    .clk(clk_i), 
+    .rst(rst_i), 
+    .data_in(Power_Spec_2), 
+	.trigger_start(trigger_start_2),
+    .is_first_pls(is_first_pls), 
+    .valid_in(data_valid_PSC_2), 
+    .Buffer_En(Capture_En), 
+    .data_out(FIFO_Buffer_data_out_2), 
+	.Upload_En(Upload_En_2),
+    .valid_out(data_valid_o2)
     );
 
 // 脉冲采集分组控制
@@ -209,7 +266,22 @@ Group_Ctrl Group_Ctrl_m (
     .Capture_En(Capture_En)
     );
 
-	
+// Overlap双通道，上传切换控制
+Upload_Switcher Upload_Switcher_m (
+    .clk(clk_i), 
+    .rst(rst_i), 
+    .trigger_start(trigger_start), 
+    .Upload_En(Upload_En_1|Upload_En_2), 
+    .data_in_1(FIFO_Buffer_data_out_1), 
+    .data_in_2(FIFO_Buffer_data_out_2), 
+	.data_valid_i1(data_valid_o1),
+	.data_valid_i2(data_valid_o2),
+    .trigger_start_1(trigger_start_1), 
+    .trigger_start_2(trigger_start_2), 
+    .data_out(data_out),
+    .data_valid_o(data_valid_o)
+    );
+
 //接收上位机的SPI命令
 SPI_CMD SPI_CMD_m (
     .clk(clk_i), 
@@ -218,7 +290,7 @@ SPI_CMD SPI_CMD_m (
     .user_register_i(user_register_i), 
     .UR_EndPosition(UR_EndPosition), 
     .UR_MirrorStart(UR_MirrorStart), 
-    .UR_LowLim_Spec(UR_LowLim_Spec), 
+    .UR_nOverlap(UR_nOverlap), 
     .UR_nRangeBins(UR_nRangeBins), 
     .UR_nPoints_RB(UR_nPoints_RB), 
     .UR_nACC_Pulses(UR_nACC_Pulses), 
@@ -237,8 +309,8 @@ begin:CHANNELA_OUTPUT
     end
     else
     begin
-        y0_out  <= FIFO_Buffer_data_out[63:48];
-        y0z_out <= FIFO_Buffer_data_out[47:32];
+        y0_out  <= data_out[63:48];
+        y0z_out <= data_out[47:32];
     end
 end
 
@@ -252,8 +324,8 @@ begin:CHANNELB_OUTPUT
     end
     else
     begin
-        y1_out  <= FIFO_Buffer_data_out[31:16];
-        y1z_out <= FIFO_Buffer_data_out[15:0];
+        y1_out  <= data_out[31:16];
+        y1z_out <= data_out[15:0];
     end
 end
 endmodule

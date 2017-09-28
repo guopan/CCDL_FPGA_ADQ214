@@ -31,7 +31,8 @@ module FIFO_in
 
            // Signal outputs
            output wire [BIT_WIDTH-1:0] data_out,
-           output reg  data_valid
+           output reg  data_valid,
+		   output wire fifo_valid
        );
 parameter  NFFT = 1024;				// 补零后的FFT点数
 
@@ -44,7 +45,6 @@ wire wr_en;
 wire rd_en;
 
 wire [BIT_WIDTH-1:0] dout;
-wire fifo_valid;
 
 // 赋值
 // assign din = wr_counter_en? data_in : 0;
@@ -104,5 +104,7 @@ fifo_Buffer_in Fifo_Buffer_in_m (
                    // .underflow(underflow), // output underflow
                    // .rd_data_count(rd_data_count) // output [9 : 0] rd_data_count
                );
+			   
+			   
 
 endmodule
