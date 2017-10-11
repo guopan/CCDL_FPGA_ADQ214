@@ -90,8 +90,8 @@ wire Upload_En_2;
 wire Capture_En;
 
 // 上传切换控制
-wire trigger_start_1;
-wire trigger_start_2;
+wire upload_start_1;
+wire upload_start_2;
 wire [63:0] data_out;
 
 
@@ -123,10 +123,10 @@ assign ul_partnum_3_o      = `USER_LOGIC_PARTNUM_3;
 assign ul_partnum_rev_o    = `USER_LOGIC_PARTNUM_REV;
 //-----------------------------------------------------------------------------------------------
 
-assign y0_o = y0_out;
-assign y0z_o = y0z_out;
-assign y1_o = y1_out;
-assign y1z_o = y1z_out;
+assign y0_o = data_out[63:48];
+assign y0z_o = data_out[47:32];
+assign y1_o = data_out[31:16];
+assign y1z_o = data_out[15:0];
 assign trigger_vector_o = trigger_vector_i;
 
 
@@ -144,7 +144,7 @@ assign user_register_o[1*16-1:0*16] = UR_CMD;
 Trigger_Generator Trigger_Generator_m (
                       .clk(clk_i),
                       .rst(rst_i),
-                      .Capture_En(Capture_En|Upload_En_1|Upload_En_2),
+                      .Capture_En(Capture_En),
                       .Trigger_Ready(trigger_ready),
                       .Trigger_Level(UR_TriggerLevel),
                       .x0_i(x0_i),
@@ -233,7 +233,7 @@ FIFO_Buffer FIFO_Buffer_m1 (
     .clk(clk_i), 
     .rst(rst_i), 
     .data_in(Power_Spec_1), 
-	.trigger_start(trigger_start_1),
+	.upload_trigger(upload_start_1),
     .is_first_pls(is_first_pls), 
     .valid_in(data_valid_PSC_1), 
     .Buffer_En(Capture_En), 
@@ -247,7 +247,7 @@ FIFO_Buffer FIFO_Buffer_m2 (
     .clk(clk_i), 
     .rst(rst_i), 
     .data_in(Power_Spec_2), 
-	.trigger_start(trigger_start_2),
+	.upload_trigger(upload_start_2),
     .is_first_pls(is_first_pls), 
     .valid_in(data_valid_PSC_2), 
     .Buffer_En(Capture_En), 
@@ -270,14 +270,13 @@ Group_Ctrl Group_Ctrl_m (
 Upload_Switcher Upload_Switcher_m (
     .clk(clk_i), 
     .rst(rst_i), 
-    .trigger_start(trigger_start), 
     .Upload_En(Upload_En_1|Upload_En_2), 
     .data_in_1(FIFO_Buffer_data_out_1), 
     .data_in_2(FIFO_Buffer_data_out_2), 
 	.data_valid_i1(data_valid_o1),
 	.data_valid_i2(data_valid_o2),
-    .trigger_start_1(trigger_start_1), 
-    .trigger_start_2(trigger_start_2), 
+    .upload_start_1(upload_start_1), 
+    .upload_start_2(upload_start_2), 
     .data_out(data_out),
     .data_valid_o(data_valid_o)
     );
@@ -300,34 +299,34 @@ SPI_CMD SPI_CMD_m (
 
 	
 //对模块输出y0_out和y0z_out赋值
-always @ (posedge clk_i or posedge rst_i)
-begin:CHANNELA_OUTPUT
-    if(rst_i == 1)
-    begin
-        y0_out  <= 0;
-        y0z_out <= 0;
-    end
-    else
-    begin
-        y0_out  <= data_out[63:48];
-        y0z_out <= data_out[47:32];
-    end
-end
+// always @ (posedge clk_i or posedge rst_i)
+// begin:CHANNELA_OUTPUT
+    // if(rst_i == 1)
+    // begin
+        // y0_out  <= 0;
+        // y0z_out <= 0;
+    // end
+    // else
+    // begin
+        // y0_out  <= data_out[63:48];
+        // y0z_out <= data_out[47:32];
+    // end
+// end
 
 //对模块输出y1_out和y1z_out赋值
-always @ (posedge clk_i or posedge rst_i)
-begin:CHANNELB_OUTPUT
-    if(rst_i == 1)
-    begin
-        y1_out  <= 0;
-        y1z_out <= 0;
-    end
-    else
-    begin
-        y1_out  <= data_out[31:16];
-        y1z_out <= data_out[15:0];
-    end
-end
+// always @ (posedge clk_i or posedge rst_i)
+// begin:CHANNELB_OUTPUT
+    // if(rst_i == 1)
+    // begin
+        // y1_out  <= 0;
+        // y1z_out <= 0;
+    // end
+    // else
+    // begin
+        // y1_out  <= data_out[31:16];
+        // y1z_out <= data_out[15:0];
+    // end
+// end
 endmodule
 
 

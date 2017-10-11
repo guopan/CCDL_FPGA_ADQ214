@@ -37,12 +37,12 @@ wire [15:0] ul_partnum_3_o;
 wire [15:0] ul_partnum_rev_o;
 
 // 上位机命令定义
-reg [15:0] UR_EndPosition = 1400;
-reg [15:0] UR_MirrorStart = 400;
-reg [15:0] UR_nOverlap    = 625;
-reg [15:0] UR_nRangeBins = 6;
-reg [15:0] UR_nPoints_RB = 250;
-reg [15:0] UR_nACC_Pulses = 2;
+reg [15:0] UR_EndPosition  = 1680;
+reg [15:0] UR_MirrorStart  = 430;
+reg [15:0] UR_nOverlap     = 875;
+reg [15:0] UR_nRangeBins   = 7;
+reg [15:0] UR_nPoints_RB   = 250;
+reg [15:0] UR_nACC_Pulses  = 2;
 reg [15:0] UR_TriggerLevel = 500;
 reg [15:0] UR_CMD = 0;
 
@@ -57,6 +57,7 @@ assign user_register_i[1*16-1:0*16] = UR_CMD;
 
 // 文件句柄
 integer output_file;
+integer fifoin_data_file;
 
 // Instantiate the Unit Under Test (UUT)
 user_logic_signal_processing uut (
@@ -83,6 +84,7 @@ user_logic_signal_processing uut (
 
 integer loop_i;
 reg pulse_tic;		// 脉冲重复间隔信号，10kHz，100μs
+wire [63:0] data_o = {y0_o,y0z_o,y1_o,y1z_o};
 
 //读取数据
 reg signed [15:0] mem[3999:0];
@@ -118,7 +120,7 @@ initial begin
     emit_1trigger(4'b0001,0);		//一个过早的触发，理论上不应该响应
 	UR_CMD = 1;
 
-    #600000;
+    #1000000;
     rst_i = 1;
 	#5 rst_i = 0;
 	
@@ -134,6 +136,7 @@ begin
 	mem_data_output(2000);
 	// serial_data_output(2000);
 end
+
 //周期触发
 always @(posedge pulse_tic)
 begin
@@ -154,10 +157,10 @@ begin
 	// $finish;
 end
 
-// 文件打开
+// 输出结果文件打开
 initial
 begin
-    output_file = $fopen("..\\..\\source\\Matlab_verify\\FIFO_out.txt","w");
+    output_file = $fopen("..\\..\\source\\Matlab_verify\\DATA_out.txt","w");
     if (!output_file)
     begin
         $display("Could not open \"FIFO_out.txt\"");
@@ -165,7 +168,9 @@ begin
     end
 end
 
+///////////////////////////////////
 // 将输出的功率谱计算结果写入文件
+///////////////////////////////////
 
 // reg output_sign = 0;
 // always @(posedge clk_i)
@@ -177,9 +182,33 @@ wire output_sign = uut.FIFO_Buffer_m1.rd_en;
 
 always @(posedge clk_i)
 begin
-   if(output_sign)
-       $fwrite(output_file,"%d\n",uut.FIFO_Buffer_m1.fifo_dout);
+   if(data_valid_o)
+       $fwrite(output_file,"%d\n", data_o);
 end
+
+///////////////////////////////////
+// 输入数据fifo_in_data_out文件打开
+///////////////////////////////////
+
+wire FIFOIN_DV = uut.fifo_in_valid;
+wire signed [13:0] FIFOIN_DATA = uut.fifo_in_data_out;
+
+initial
+begin
+    fifoin_data_file = $fopen("..\\..\\source\\Matlab_verify\\FIFOIN_DATA_out.txt","w");
+    if (!fifoin_data_file)
+    begin
+        $display("Could not open \"FIFOIN_DATA_out.txt\"");
+        $stop;
+    end
+end
+
+always @(posedge clk_i)
+begin
+   if(FIFOIN_DV)
+       $fwrite(fifoin_data_file,"%d\n", FIFOIN_DATA);
+end
+
 
 // 【TASK】读出mem中的数据，赋给 x0_i 和 x0z_i
 task mem_data_output;

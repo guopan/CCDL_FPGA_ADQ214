@@ -16,7 +16,7 @@ module FIFO_Buffer(
            input clk,
            input rst,
            input [49:0] data_in,
-		   input trigger_start,
+		   input upload_trigger,
            input is_first_pls,
            input valid_in,
            input Buffer_En,			// 为高时累加缓冲，为低时输出结果
@@ -25,7 +25,7 @@ module FIFO_Buffer(
 		   output reg Upload_En,	// 使能外部上传控制用的Trigger_Generator
            output reg valid_out
        );
-
+parameter UPLOAD_POINTS_ONCE = 512;
 
 reg rd_en, wr_en, rd_en_reg;
 
@@ -81,7 +81,7 @@ begin
         rd_en <= 0;
     else if(Buffer_En == 0)
         // rd_en <= ~almost_empty;
-        rd_en <= (Counter < 2048)&~almost_empty;
+        rd_en <= (Counter < UPLOAD_POINTS_ONCE)&~almost_empty;
     else if(is_first_pls)
         rd_en <= 0;
     else
@@ -102,7 +102,7 @@ begin
 end
 
 // 缓冲功率谱数据用的 Buffer
-// 数据位宽64，深度512*距离门数16 = 8192
+// 数据位宽64，深度512*距离门数32 = 16384
 FIFO_Depth_512 FIFO_Depth_512_m
                (
                    .clk(clk), // input clk
@@ -156,19 +156,19 @@ end
 
 // Trigger后的512计数器
 // 当Upload_En为高时
-// trigger_start开始后，产生一个2048个clk的高电平
+// upload_trigger开始后，产生一个 UPLOAD_POINTS_ONCE 个clk的高电平
 always @(posedge clk or posedge rst)
 begin
     if(rst == 1)
-        Counter <= 2048;
+        Counter <= UPLOAD_POINTS_ONCE;
     else if(Upload_En == 0)
-        Counter <= 2048;
-    else if(trigger_start)
+        Counter <= UPLOAD_POINTS_ONCE;
+    else if(upload_trigger)
         Counter <= 0;
-	else if(Counter < 2048)
+	else if(Counter < UPLOAD_POINTS_ONCE)
         Counter <= Counter + 1;
     else
-        Counter <= 2048;
+        Counter <= UPLOAD_POINTS_ONCE;
 end
 
 endmodule

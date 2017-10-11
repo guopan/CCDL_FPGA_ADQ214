@@ -8,70 +8,154 @@
 // Contact : 	guopan@bit.edu.cn
 // Date : 		Sep.16.2017
 //==============================================================================
-// Description :	ç”¨äºæ§åˆ¶é‡å FFTä¹‹åï¼ŒåŒé€šé“çš„ä¸Šä¼ 
-//					è§¦å‘å±è”½ï¼Œä¾é è§¦å‘å‰ä¸æ»¡è¶³æ¡ä»¶çš„å‘¨æœŸæ•°æ§åˆ¶
-//					trigger_startæ˜¯å•æ—¶é’Ÿè„‰å†²
+// Description :	ÓÃÓÚ¿ØÖÆÖØµşFFTÖ®ºó£¬Ë«Í¨µÀµÄÉÏ´«
+//					Ã¿¸ô COUNTER_MAX ¸öÊ±ÖÓ£¬ÉÏ´« 512 ¸öÊı¾İ¡£
+//					upload_startÊÇµ¥Ê±ÖÓÂö³å
 //==============================================================================
 module Upload_Switcher(
     input clk,
     input rst,
-    input trigger_start,
     input Upload_En,
     input [63:0] data_in_1,
     input [63:0] data_in_2,
 	input data_valid_i1,
 	input data_valid_i2,
 	
-    output reg trigger_start_1,
-    output reg trigger_start_2,
+    output reg upload_start_1,
+    output reg upload_start_2,
     output reg [63:0] data_out,
 	output reg data_valid_o
     );
-
-reg Switcher;
 	
+reg switch_start;
+reg upload_start;
+
+parameter COUNTER_MAX = 16'd4096;
+
+reg Switch_ahd;	// ±ÈSwitchÌáÇ°1¸öclk£¬ÓÃÓÚÉú³ÉSwitch
+reg Switch;
+reg [15:0] UpLoad_Counter;		// ÉÏ´«¹ı³ÌÖĞ£¬Ê±ÖÓ¼ÆÊıÆ÷
+reg [15:0] RB_Counter;			// ¾àÀëÃÅ¼ÆÊıÆ÷
+
+
+// Switch Îª 1 Ê±£¬Ñ¡Í¨ Channel 1 Êä³ö
+// Switch Îª 0 Ê±£¬Ñ¡Í¨ Channel 0 Êä³ö
+// Ç°Èı¸ö¾àÀëÃÅÎª 1£»ºóÃæµÄ¾àÀëÃÅ£¬¿ªÊ¼½»ÌæÎª 1
+always @(posedge clk or posedge rst)
+begin
+    if(rst == 1)
+		Switch_ahd <= 0;
+    else if(Upload_En == 0)
+		Switch_ahd <= 0;
+	else if(RB_Counter < 3)
+		Switch_ahd <= 1;
+	else if(switch_start == 1)
+		Switch_ahd <= ~Switch_ahd;
+	else
+		Switch_ahd <= Switch_ahd;
+end
+
+always @(posedge clk or posedge rst)
+begin
+    if(rst == 1)
+		Switch <= 0;
+	else
+		Switch <= Switch_ahd;
+end
+
+// Éú³É ÉÏ´«´¥·¢ĞÅºÅ upload_start_1 ºÍ _2 
 always @(posedge clk or posedge rst)
 begin
     if(rst == 1)
 	begin
-        trigger_start_1 <= 0;
-		trigger_start_2 <= 0;
-		Switcher <= 0;
+        upload_start_1 <= 0;
+		upload_start_2 <= 0;
 	end
-    else if(Upload_En == 1 && trigger_start == 1)
+    else if(Upload_En == 0)
 	begin
-        trigger_start_1 <= ~Switcher;
-		trigger_start_2 <= Switcher;
-		Switcher <= ~Switcher;
+        upload_start_1 <= 0;
+		upload_start_2 <= 0;
+	end
+	else if(upload_start == 1)
+	begin
+        upload_start_1 <= Switch;
+		upload_start_2 <= ~Switch;
 	end
 	else
 	begin
-        trigger_start_1 <= 0;
-		trigger_start_2 <= 0;
-		Switcher <= Switcher;
+        upload_start_1 <= 0;
+		upload_start_2 <= 0;
 	end
 end
 
-// åˆ‡æ¢ data_out è¾“å‡º
+// ÇĞ»»¶¥²ãÄ£¿éµÄ data_out Êä³ö
 always @(posedge clk or posedge rst)
 begin
     if(rst == 1)
         data_out <= 64'd0;
-    else if(Switcher == 1)
+    else if(Switch == 1)
         data_out <= data_in_1;
 	else
         data_out <= data_in_2;
 end
 
-// åˆ‡æ¢ data_valid è¾“å‡º
+// ÇĞ»»¶¥²ãÄ£¿éµÄ data_valid Êä³ö
 always @(posedge clk or posedge rst)
 begin
     if(rst == 1)
         data_valid_o <= 0;
-    else if(Switcher == 1)
+    else if(Switch == 1)
         data_valid_o <= data_valid_i1;
 	else
         data_valid_o <= data_valid_i2;
+end
+
+// Ê±ÖÓ¼ÆÊıÆ÷ UpLoad_Counter
+always @(posedge clk or posedge rst)
+begin
+    if(rst == 1)
+        UpLoad_Counter <= COUNTER_MAX;
+    else if(Upload_En == 0)
+        UpLoad_Counter <= COUNTER_MAX;
+	else if(UpLoad_Counter == COUNTER_MAX)
+        UpLoad_Counter <= 0;
+    else
+        UpLoad_Counter <= UpLoad_Counter + 1;
+end
+
+// upload_start ¸³Öµ
+always @(posedge clk or posedge rst)
+begin
+    if(rst == 1)
+        upload_start <= 0;
+    else if(Upload_En == 0)
+        upload_start <= 0;
+	else
+        upload_start <= (UpLoad_Counter == COUNTER_MAX/2);
+end
+
+// switch_start ¸³Öµ
+always @(posedge clk or posedge rst)
+begin
+    if(rst == 1)
+        switch_start <= 0;
+    else if(Upload_En == 0)
+        switch_start <= 0;
+	else
+        switch_start <= (UpLoad_Counter == 1);
+end
+
+// ¾àÀëÃÅ¼ÆÊıÆ÷ RB_Counter
+always @(posedge clk or posedge rst)
+begin
+    if(rst == 1)
+        RB_Counter <= 0;
+    else if(Upload_En == 0)
+        RB_Counter <= 0;
+	else if(switch_start == 1)
+        RB_Counter <= RB_Counter + 1;
+    else
+        RB_Counter <= RB_Counter;
 end
 
 endmodule
